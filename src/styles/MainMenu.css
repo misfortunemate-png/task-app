@@ -1,4 +1,5 @@
-/* メインメニュー（1層目）スタイル — spec-phase3.md §2 */
+/* メインメニュー（1層目）スタイル — spec-phase4.md §B0
+   上部固定。アイコン+ラベル横並びで高さ約32px（border含めて36px） */
 .main-menu {
   --menu-accent: var(--char-color, #3a7ca5);
   display: flex;
@@ -8,31 +9,28 @@
   background: var(--color-card-bg);
   border-bottom: 1px solid var(--color-border);
   width: 100%;
+  max-width: 100%;
 }
 
 .main-menu-tab {
   flex: 1;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: 8px 4px 6px;
+  gap: 4px;
+  padding: 6px 2px;
   border: none;
   background: transparent;
   cursor: pointer;
   color: var(--color-muted);
   transition: color 0.15s;
   font-family: inherit;
+  min-height: 35px;
 }
 
-.main-menu-tab.active {
-  color: var(--menu-accent);
-}
+.main-menu-tab.active { color: var(--menu-accent); }
+.main-menu-tab.active .main-menu-label { font-weight: 700; }
 
-.main-menu-tab.active .main-menu-label {
-  font-weight: 700;
-}
-
-.main-menu-icon { font-size: 1.3rem; line-height: 1; }
-.main-menu-label { font-size: 0.68rem; }
+.main-menu-icon  { font-size: 1.05rem; line-height: 1; }
+.main-menu-label { font-size: 0.72rem; }

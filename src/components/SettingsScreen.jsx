@@ -21,6 +21,9 @@ export default function SettingsScreen({ onSettingsChange }) {
   const [debugEvent,    setDebugEvent]    = useState('register')
   const [debugCategory, setDebugCategory] = useState('generic')
   const [debugLine,     setDebugLine]     = useState(null)
+  // §5/§6: 時間帯・レア度の強制設定（localStorageに永続化）
+  const [debugTimeSlot, setDebugTimeSlot]     = useState(localStorage.getItem('debugTimeSlot') ?? 'auto')
+  const [debugForceRarity, setDebugForceRarity] = useState(parseInt(localStorage.getItem('debugForceRarity') ?? '0', 10))
   // キャラパラメータ一時変更
   const [paramOverrides, setParamOverrides] = useState({})
 
@@ -33,8 +36,20 @@ export default function SettingsScreen({ onSettingsChange }) {
 
   // デバッグ: セリフ強制表示
   const handleDebugLine = () => {
-    const line = pickLine(debugCharId, debugEvent, debugCategory)
+    const opts = {}
+    if (debugTimeSlot !== 'auto')   opts.forceTimeSlot = debugTimeSlot
+    if (debugForceRarity >= 1)      opts.forceRarity   = debugForceRarity
+    const line = pickLine(debugCharId, debugEvent, debugCategory, opts)
     setDebugLine({ characterId: debugCharId, line })
+  }
+
+  const saveDebugTimeSlot = (v) => {
+    setDebugTimeSlot(v)
+    localStorage.setItem('debugTimeSlot', v)
+  }
+  const saveDebugForceRarity = (v) => {
+    setDebugForceRarity(v)
+    localStorage.setItem('debugForceRarity', String(v))
   }
 
   // デバッグ: パラメータ一時変更
@@ -124,6 +139,27 @@ export default function SettingsScreen({ onSettingsChange }) {
       {settings.debugMode && (
         <section className="settings-section debug-panel">
           <h3 className="settings-section-title">🐛 デバッグパネル</h3>
+
+          {/* §5/§6 時間帯・レア度の強制設定 */}
+          <div className="debug-block">
+            <p className="debug-label">時間帯（pickLine全体に適用）</p>
+            <div className="debug-row">
+              <select className="form-select" value={debugTimeSlot} onChange={(e) => saveDebugTimeSlot(e.target.value)}>
+                <option value="auto">auto（現在時刻）</option>
+                <option value="morning">morning (5:00-10:59)</option>
+                <option value="afternoon">afternoon (11:00-16:59)</option>
+                <option value="evening">evening (17:00-22:59)</option>
+                <option value="night">night (23:00-4:59)</option>
+              </select>
+            </div>
+            <p className="debug-label" style={{ marginTop: 8 }}>次回セリフの強制レア度</p>
+            <div className="debug-row">
+              <select className="form-select" value={debugForceRarity} onChange={(e) => saveDebugForceRarity(parseInt(e.target.value, 10))}>
+                <option value={0}>0（強制なし）</option>
+                {[1,2,3,4,5].map((r) => <option key={r} value={r}>★{r}</option>)}
+              </select>
+            </div>
+          </div>
 
           {/* セリフ強制表示 */}
           <div className="debug-block">

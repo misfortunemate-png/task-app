@@ -1,33 +1,37 @@
-/* キャラタブ（2層目）スタイル — spec-phase3.md §3 */
+/* 2層目ナビ（汎用 SubNav）スタイル — spec-phase4.md §B0
+   高さは約30px。1層目（MainMenu, 約32px）と合わせて65px以内に抑える */
 .char-tab {
   background: var(--color-card-bg);
   border-bottom: 1px solid var(--color-border);
-  max-width: var(--max-width);
-  margin: 0 auto;
+  position: sticky;
+  top: 36px;            /* MainMenuの直下に固定。MainMenu高さ+border = 36px */
+  z-index: 19;
   width: 100%;
 }
 
-/* ナビ行 */
 .char-tab-nav {
   display: flex;
   overflow-x: auto;
   scrollbar-width: none;
   padding: 0 12px;
+  max-width: var(--max-width);
+  margin: 0 auto;
 }
 .char-tab-nav::-webkit-scrollbar { display: none; }
 
 .char-tab-btn {
   flex-shrink: 0;
-  padding: 8px 12px;
+  padding: 6px 12px;
   border: none;
   border-bottom: 2px solid transparent;
   background: transparent;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--color-muted);
   cursor: pointer;
   font-family: inherit;
   transition: color 0.15s, border-bottom-color 0.15s;
   white-space: nowrap;
+  line-height: 1.4;
 }
 
 .char-tab-btn.active {
@@ -35,27 +39,3 @@
   border-bottom-color: var(--char-color);
   font-weight: 700;
 }
-
-/* キャラ絵エリア */
-.char-tab-display {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 10px 0;
-  min-height: 80px;
-}
-
-.char-display-all {
-  display: flex;
-  gap: 8px;
-}
-.char-display-img-sm { flex-shrink: 0; }
-
-.char-display-single {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-.char-display-img-lg { flex-shrink: 0; }
-.char-display-name { font-size: 0.78rem; font-weight: 600; }

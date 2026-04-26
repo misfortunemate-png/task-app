@@ -2,6 +2,7 @@
 // spec-phase3.md §3 §5
 import { useState } from 'react'
 import { CHARACTERS } from '../data/characters.js'
+import { CATEGORIES } from '../data/categories.js'
 import { toLocalDateStr, tsToLocalDateStr } from '../utils/date.js'
 
 const todayStr = () => toLocalDateStr(new Date())
@@ -11,36 +12,34 @@ const tomorrowStr = () => {
   return toLocalDateStr(d)
 }
 
-export const CATEGORIES = [
-  { id: 'cleaning',    emoji: '🧹', label: '掃除' },
-  { id: 'shopping',   emoji: '🛒', label: '買い物' },
-  { id: 'cooking',    emoji: '🍳', label: '料理' },
-  { id: 'maintenance',emoji: '🔧', label: '整備' },
-  { id: 'plants',     emoji: '🪴', label: '植物' },
-  { id: 'rearrange',  emoji: '📦', label: '模様替え' },
-  { id: 'dev',        emoji: '💻', label: '開発' },
-  { id: 'study',      emoji: '📚', label: '勉強' },
-  { id: 'health',     emoji: '🏃', label: '運動' },
-  { id: 'admin',      emoji: '📋', label: '事務' },
-  { id: 'play',       emoji: '🎮', label: '遊び' },
-  { id: 'other',      emoji: '🌟', label: 'その他' },
-]
-
 export default function TaskForm({ initial, onSubmit, onCancel }) {
+  // §1: プリフィルか編集かを区別。編集はFirestore docを持つ（id付き）、プリフィルは _prefilled フラグ
+  const isPrefilled = !!initial?._prefilled
+  const isEdit = !!initial && !isPrefilled
+
+  // initial.dueDate は編集時はTimestamp、プリフィル時はYYYY-MM-DD文字列。両対応
+  const initialDueDate = (() => {
+    if (!initial?.dueDate) return ''
+    if (typeof initial.dueDate === 'string') return initial.dueDate
+    return tsToLocalDateStr(initial.dueDate) ?? ''
+  })()
+
   const [title, setTitle]       = useState(initial?.title     ?? '')
   const [category, setCategory] = useState(initial?.category  ?? '')
   const [note, setNote]         = useState(initial?.note      ?? '')
-  // キャラ選択は必須。既存タスクの編集時は初期値を引き継ぐ
   const [character, setCharacter] = useState(initial?.character ?? '')
   const [charError, setCharError] = useState(false)
-  // dueDate: "YYYY-MM-DD" 文字列 or '' （空 = 設定なし）
-  // Firestoreには Timestamp または null で保存。変換は onSubmit 呼び出し側で行う
-  const [dueDate, setDueDate] = useState(
-    tsToLocalDateStr(initial?.dueDate) ?? ''
-  )
+  const [dueDate, setDueDate]   = useState(initialDueDate)
   const [dueDateError, setDueDateError] = useState('')
+  // §1: rewardPromptはフォームでは編集UIを出さないが、プリフィル値はsubmit時に転送する
+  const [rewardPrompt] = useState(initial?.rewardPrompt ?? '')
 
-  const isEdit = !!initial
+  // プリフィルされたフィールドは背景色で視覚的に区別する（§1）
+  const prefilledStyle = (key) => {
+    if (!isPrefilled) return {}
+    if (!initial?.[key]) return {}
+    return { background: 'var(--char-color-bg, #fffbe8)' }
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -62,13 +61,24 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
         return
       }
     }
-    onSubmit({ title: title.trim(), category, note: note.trim(), character, dueDate: dueDate || null })
+    const payload = { title: title.trim(), category, note: note.trim(), character, dueDate: dueDate || null }
+    // §1: rewardPromptはあれば付与（編集時の既存値も保持）
+    const rp = (rewardPrompt ?? initial?.rewardPrompt ?? '').toString()
+    if (rp) payload.rewardPrompt = rp
+    onSubmit(payload)
   }
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onCancel()}>
       <div className="modal-sheet">
-        <h2 className="modal-title">{isEdit ? 'タスクを編集' : 'タスクを追加'}</h2>
+        <h2 className="modal-title">
+          {isEdit ? 'タスクを編集' : (isPrefilled ? 'タスクを追加（インポート）' : 'タスクを追加')}
+        </h2>
+        {isPrefilled && (
+          <p style={{ fontSize: '0.78rem', color: 'var(--color-muted)', marginTop: -12, marginBottom: 16 }}>
+            背景色付きの項目はURLからプリフィルされています
+          </p>
+        )}
         <form onSubmit={handleSubmit}>
 
           {/* タイトル */}
@@ -76,6 +86,7 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
             <label className="form-label">タイトル <span style={{ color: 'var(--color-hakone)' }}>*</span></label>
             <input
               className="form-input"
+              style={prefilledStyle('title')}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="タスクを入力..."
@@ -153,6 +164,7 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
             <label className="form-label">メモ</label>
             <textarea
               className="form-textarea"
+              style={prefilledStyle('note')}
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="メモ（任意）"

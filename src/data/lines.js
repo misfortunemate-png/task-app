@@ -1,6 +1,8 @@
-// 初期セリフデータ — spec-phase3.md §4 §6
-// 3キャラ × 4イベント × generic = 36個
-// セリフ選択: カテゴリ専用 > generic > フォールバック "……。"
+// 初期セリフデータ — spec-phase3.md §4 §6 / spec-phase4.md §B2 §5 §6
+// 各セリフは { text, face, timeSlot?, rarity? } 構造。
+//   timeSlot: "morning"|"afternoon"|"evening"|"night" — 省略時は全時間帯
+//   rarity:   1〜5 — 省略時は1（最頻出）
+// セリフ選択: イベント一致 → timeSlot一致 OR 省略 → カテゴリ専用 > generic → rarity重み付き抽選
 export const LINES = [
   { character: 'hakone', category: 'generic', event: 'register', lines: [
     { text: 'おっ、やる気出したね！ えらいえらい！', face: 'smile' },
@@ -64,6 +66,40 @@ export const LINES = [
     { text: '取消を確認。作業キューから除外しました。', face: 'salute' },
     { text: '了解しました。……マスターの判断を記録に残します。', face: 'normal' },
   ]},
+
+  // §5 時間帯セリフ — 各キャラの complete に時間帯バリエーションを追加
+  { character: 'hakone', category: 'generic', event: 'complete', lines: [
+    { text: 'おはよう！ 朝からえらいねぇ、ショウゴくん♡', face: 'smile', timeSlot: 'morning' },
+    { text: 'お昼はちゃんと食べてる？ 完了えらいよ〜', face: 'normal', timeSlot: 'afternoon' },
+    { text: '夜遅くまでお疲れさま。今日はもう休もうね？', face: 'troubled', timeSlot: 'evening' },
+    { text: '夜中まで……無理してない？ なでなでしてあげる', face: 'dere', timeSlot: 'night', rarity: 3 },
+  ]},
+  { character: 'cleade', category: 'generic', event: 'complete', lines: [
+    { text: '朝から良い滑り出しですね。本日も帳簿に記入します。', face: 'smile', timeSlot: 'morning' },
+    { text: '昼の進捗、確認しました。順調ですね。', face: 'normal', timeSlot: 'afternoon' },
+    { text: '夕方の完了、お疲れさまです。一区切りですね。', face: 'smile', timeSlot: 'evening' },
+    { text: '夜分にお疲れさまです……一緒に少し休みませんか？', face: 'blush', timeSlot: 'night', rarity: 3 },
+  ]},
+  { character: 'frane', category: 'generic', event: 'complete', lines: [
+    { text: '朝の作業効率は最良域です。マスター、引き続き任務を継続します。', face: 'salute', timeSlot: 'morning' },
+    { text: '昼帯の完了処理を記録。次の任務待機中です。', face: 'normal', timeSlot: 'afternoon' },
+    { text: '夕の任務完了。休息推奨レベル：中。', face: 'normal', timeSlot: 'evening' },
+    { text: '深夜活動を検知。マスター、健康指標が気になります。', face: 'troubled', timeSlot: 'night', rarity: 3 },
+  ]},
+
+  // §6 ★4 / ★5 レアセリフ（complete時にまれに出る）
+  { character: 'hakone', category: 'generic', event: 'complete', lines: [
+    { text: 'やったぁ！ ショウゴくん最高！ ぎゅーっ！', face: 'dere', rarity: 4 },
+    { text: '……だ、大好き♡ 今のなし！ 言ってないからね！？', face: 'blush', rarity: 5 },
+  ]},
+  { character: 'cleade', category: 'generic', event: 'complete', lines: [
+    { text: 'ショウゴさん。あなたが頑張る姿、ずっと見ていたいです。', face: 'blush', rarity: 4 },
+    { text: '……完了報告書には書けない言葉ですが──愛しています、ショウゴさん。', face: 'dere', rarity: 5 },
+  ]},
+  { character: 'frane', category: 'generic', event: 'complete', lines: [
+    { text: 'マスター。フランの記録回路に、この瞬間を保存します。', face: 'salute', rarity: 4 },
+    { text: 'マスター。……これは「幸福」と分類して良い感情ですか？', face: 'blush', rarity: 5 },
+  ]},
 ];
 
 // なでなでセリフ — spec-phase3.md §6
@@ -121,27 +157,128 @@ export const FACE_MAP = {
   stare:     '🫤',
 };
 
-// セリフ選択ロジック — カテゴリ専用 > generic > フォールバック
-export const pickLine = (characterId, event, category = 'generic') => {
-  const FALLBACK = { text: '……。', face: 'normal' };
-
-  // カテゴリ専用を優先（genericでない場合のみ）
-  if (category !== 'generic') {
-    const specific = LINES.find(
-      (l) => l.character === characterId && l.event === event && l.category === category
-    );
-    if (specific?.lines?.length) {
-      return specific.lines[Math.floor(Math.random() * specific.lines.length)];
+// インポートURL（§1）経由で追加されたセリフのランタイム登録
+// Firestoreには保存しない。ブラウザセッション内のみ有効。
+//   added: [{ character, event, category, lines: [{text, face, ...}, ...] }, ...]
+// pickLine選択時に LINES と同等に扱う
+const IMPORTED_LINES = []
+export const registerImportedLines = (entries) => {
+  if (!Array.isArray(entries)) return
+  for (const ln of entries) {
+    if (!ln || typeof ln !== 'object') continue
+    if (typeof ln.text !== 'string') continue
+    const character = ln.character
+    const event     = ln.event ?? 'register'
+    const category  = ln.category ?? 'generic'
+    let bucket = IMPORTED_LINES.find(
+      (b) => b.character === character && b.event === event && b.category === category
+    )
+    if (!bucket) {
+      bucket = { character, event, category, lines: [] }
+      IMPORTED_LINES.push(bucket)
     }
+    bucket.lines.push({ text: ln.text, face: ln.face ?? 'normal' })
   }
+}
 
-  // genericセリフ
-  const generic = LINES.find(
-    (l) => l.character === characterId && l.event === event && l.category === 'generic'
-  );
-  if (generic?.lines?.length) {
-    return generic.lines[Math.floor(Math.random() * generic.lines.length)];
+// 現在時刻 → timeSlot 判定 — spec-phase4.md §5
+export const getCurrentTimeSlot = (date = new Date()) => {
+  const h = date.getHours();
+  if (h >= 5  && h < 11) return 'morning';
+  if (h >= 11 && h < 17) return 'afternoon';
+  if (h >= 17 && h < 23) return 'evening';
+  return 'night';
+};
+
+// rarity 重みテーブル — spec-phase4.md §6
+const RARITY_WEIGHTS = { 1: 100, 2: 50, 3: 20, 4: 5, 5: 1 };
+
+const pickWeighted = (lines) => {
+  const total = lines.reduce((s, ln) => s + (RARITY_WEIGHTS[ln.rarity ?? 1] ?? 100), 0);
+  let r = Math.random() * total;
+  for (const ln of lines) {
+    r -= RARITY_WEIGHTS[ln.rarity ?? 1] ?? 100;
+    if (r <= 0) return ln;
   }
+  return lines[lines.length - 1];
+};
+
+// セリフ選択ロジック — spec-phase4.md §5 §6
+//   1. キャラ・イベント・カテゴリでセット抽出（カテゴリ専用 > generic）
+//   2. timeSlot一致 OR 省略 でフィルタ（forceTimeSlot で固定可）
+//   3. forceRarity指定時はレア度フィルタ
+//   4. rarityで重み付き抽選
+export const pickLine = (characterId, event, category = 'generic', opts = {}) => {
+  const FALLBACK = { text: '……。', face: 'normal' };
+  const slot = opts.forceTimeSlot ?? getCurrentTimeSlot();
+
+  const filterByTimeSlot = (lines) => {
+    const matched = lines.filter((ln) => !ln.timeSlot || ln.timeSlot === slot);
+    return matched.length > 0 ? matched : lines.filter((ln) => !ln.timeSlot);
+  };
+  const filterByRarity = (lines) => {
+    if (!opts.forceRarity) return lines;
+    const matched = lines.filter((ln) => (ln.rarity ?? 1) === opts.forceRarity);
+    return matched.length > 0 ? matched : lines;
+  };
+  const select = (pool) => pickWeighted(filterByRarity(filterByTimeSlot(pool)));
+
+  // LINES と IMPORTED_LINES を統合し、同一キーの複数バケットをマージして検索
+  const collect = (cat) => {
+    const all = [...LINES, ...IMPORTED_LINES]
+    return all
+      .filter((l) => l.character === characterId && l.event === event && l.category === cat)
+      .flatMap((l) => l.lines ?? [])
+  };
+  if (category !== 'generic') {
+    const specific = collect(category);
+    if (specific.length) return select(specific);
+  }
+  const generic = collect('generic');
+  if (generic.length) return select(generic);
 
   return FALLBACK;
+};
+
+// §2 つんつん段階セリフ — タップ累計に応じた5段階反応
+// 各キャラ5段階。indexは段階(0始まり)。閾値はPOKE_THRESHOLDS。
+export const POKE_THRESHOLDS = [1, 3, 5, 10, 20]
+export const POKE_LINES = {
+  hakone: [
+    { text: 'ん？', face: 'surprise' },
+    { text: 'もぉ〜', face: 'troubled' },
+    { text: 'やめてよぉ……♡', face: 'blush' },
+    { text: '……ひゃん♡', face: 'dere' },
+    { text: '怒るよ！？', face: 'angry' },
+  ],
+  cleade: [
+    { text: 'あの……どうかなさいましたか？', face: 'normal' },
+    { text: 'ショウゴさん、お仕事中ですよ？', face: 'troubled' },
+    { text: 'もう……帳簿に「業務妨害」と記入しますからね？', face: 'mischief' },
+    { text: '……仕方のない方ですね。少しだけですよ？', face: 'blush' },
+    { text: 'これ以上は本当にお仕置きしますからね！', face: 'angry' },
+  ],
+  frane: [
+    { text: '接触を検知。', face: 'normal' },
+    { text: '接触回数が増加しています。', face: 'normal' },
+    { text: '許容値を超過しています。', face: 'troubled' },
+    { text: '……嫌ではありません。', face: 'blush' },
+    { text: 'マスター。', face: 'salute' },
+  ],
+}
+
+// ランキング1位セリフ — spec-phase4.md §3
+export const RANKING_LINES = {
+  hakone: [
+    { text: 'えへへ……今週はいちばん頑張ったの、わたしだよ？', face: 'dere' },
+    { text: 'やったぁ！ ショウゴくんと一緒にいた時間も多かったね♡', face: 'blush' },
+  ],
+  cleade: [
+    { text: '今週の帳簿、わたしが筆頭でした。次回も精進します。', face: 'smile' },
+    { text: '……一番だったのですね。少しだけ、誇らしいです。', face: 'blush' },
+  ],
+  frane: [
+    { text: '今週のタスク完了数、フランがトップでした。任務継続します。', face: 'salute' },
+    { text: 'マスター。記録更新を確認しました。これは……嬉しい結果です。', face: 'blush' },
+  ],
 };

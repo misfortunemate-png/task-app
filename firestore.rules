@@ -1,18 +1,30 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // タスク — spec-phase3.md §5 / spec-phase4.md §B2（rewardPrompt 追加）
     match /tasks/{taskId} {
-      // 自分のタスクのみ読み取り・更新・削除可能
       allow read, update, delete: if request.auth != null
                                   && resource.data.uid == request.auth.uid;
 
-      // 新規作成時: uid一致 + 新フィールドのバリデーション
+      // 作成時バリデーション
+      // dueDate: timestampまたはnull
+      // rewardPrompt: stringまたは未設定（任意）
       allow create: if request.auth != null
                     && request.resource.data.uid == request.auth.uid
                     && request.resource.data.character is string
                     && (request.resource.data.dueDate == null
                         || request.resource.data.dueDate is timestamp)
-                    && request.resource.data.dueDateUnlocked is bool;
+                    && request.resource.data.dueDateUnlocked is bool
+                    && (!('rewardPrompt' in request.resource.data)
+                        || request.resource.data.rewardPrompt is string);
+    }
+
+    // ユーザー設定 — spec-phase4.md §B2
+    // gachaTickets / pokeCount / gachaInventory を保持
+    match /users/{userId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
     }
   }
 }

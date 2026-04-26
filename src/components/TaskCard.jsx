@@ -1,5 +1,5 @@
 // タスクカード — キャラアクセントボーダー・完了予定日表示 — spec-phase3.md §3 §5
-import { CATEGORIES } from './TaskForm.jsx'
+import { CATEGORIES } from '../data/categories.js'
 import { getCharacterById } from '../data/characters.js'
 import { toLocalDateStr, tsToLocalDateStr } from '../utils/date.js'
 

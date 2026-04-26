@@ -1,35 +1,49 @@
-// タスク画面 — CharTab・TaskList・セリフモーダル・放置判定・なでなでモーダルを束ねる
-// spec-phase3.md §2 §3 §4 §6
-import { useState, useEffect } from 'react'
+// タスク画面 — TaskList・セリフモーダル・放置判定・なでなでモーダルを束ねる
+// spec-phase3.md §2 §3 §4 §6 / spec-phase4.md §B0（CharTabはAppへ移動）
+import { useState, useEffect, useCallback } from 'react'
 import { updateDoc, doc } from 'firebase/firestore'
 import { db } from '../firebase.js'
-import CharTab from './CharTab.jsx'
 import TaskList from './TaskList.jsx'
 import DialogModal from './DialogModal.jsx'
 import NadeModal from './NadeModal.jsx'
 import { useTasks } from '../hooks/useTasks.js'
-import { getCharacterById } from '../data/characters.js'
 import { pickLine } from '../data/lines.js'
 import { toLocalDateStr, tsToLocalDateStr } from '../utils/date.js'
 
 const SS_KEY_LAST_NEGLECT = 'lastNeglectTaskId'
 
-export default function TaskScreen({ user, onCharColorChange, debugMode, nadeThreshold, showToast }) {
+// characterFilter: 上位（App.jsx）から渡される現在のキャラフィルタ — null | charId
+// pendingImport / onImportConsumed: §1 URLインポート（プリフィル）
+// userDoc / updateUserDoc: §4 チケット付与に使う
+export default function TaskScreen({
+  user, characterFilter, debugMode, nadeThreshold, showToast,
+  userDoc, updateUserDoc,
+  pendingImport, onImportConsumed,
+}) {
   const { tasks, addTask, updateTask, toggleDone, deleteTask } = useTasks(user.uid, showToast)
-  const [activeChar, setActiveChar]     = useState(null)
   const [dialog, setDialog]             = useState(null)
   const [neglectModal, setNeglectModal] = useState(null)
   const [neglectDone, setNeglectDone]   = useState(false) // マウントあたり1回のみ表示
 
-  const handleCharChange = (charId) => {
-    setActiveChar(charId)
-    const color = charId ? (getCharacterById(charId)?.color ?? null) : null
-    onCharColorChange(color)
-  }
+  // §5/§6: デバッグ強制設定を読む（debugModeがONの時のみ反映）
+  const buildPickOpts = useCallback(() => {
+    if (!debugMode) return {}
+    const opts = {}
+    const ts = localStorage.getItem('debugTimeSlot')
+    if (ts && ts !== 'auto') opts.forceTimeSlot = ts
+    const rr = parseInt(localStorage.getItem('debugForceRarity') ?? '0', 10)
+    if (rr >= 1 && rr <= 5) opts.forceRarity = rr
+    return opts
+  }, [debugMode])
 
-  const handleDialogOpen = (event, characterId) => {
+  const handleDialogOpen = (event, characterId, extras = {}) => {
     if (!characterId) return
-    setDialog({ characterId, line: pickLine(characterId, event) })
+    const line = pickLine(characterId, event, 'generic', buildPickOpts())
+    setDialog({ characterId, line, rewardPrompt: extras.rewardPrompt })
+    // §4: タスク完了時にガチャチケット +1
+    if (event === 'complete' && updateUserDoc) {
+      updateUserDoc({ gachaTickets: (userDoc?.gachaTickets ?? 0) + 1 })
+    }
   }
 
   // 放置判定 — tasksロード後に1回だけ実行
@@ -49,8 +63,8 @@ export default function TaskScreen({ user, onCharColorChange, debugMode, nadeThr
     const others = overdue.filter((t) => t.id !== lastId)
     const target = others.length > 0 ? others[0] : overdue[0]
     sessionStorage.setItem(SS_KEY_LAST_NEGLECT, target.id)
-    setNeglectModal({ task: target, line: pickLine(target.character, 'neglect') })
-  }, [tasks, neglectDone])
+    setNeglectModal({ task: target, line: pickLine(target.character, 'neglect', 'generic', buildPickOpts()) })
+  }, [tasks, neglectDone, buildPickOpts])
 
   // なでなでロック解除
   const handleUnlock = (taskId) =>
@@ -60,20 +74,21 @@ export default function TaskScreen({ user, onCharColorChange, debugMode, nadeThr
   const triggerNeglect = () => {
     const target = tasks.find((t) => t.status !== 'done' && t.dueDate)
     if (!target) return
-    setNeglectModal({ task: target, line: pickLine(target.character, 'neglect') })
+    setNeglectModal({ task: target, line: pickLine(target.character, 'neglect', 'generic', buildPickOpts()) })
   }
 
   return (
     <div className="task-screen">
-      <CharTab activeChar={activeChar} onCharChange={handleCharChange} />
       <TaskList
         tasks={tasks}
         addTask={addTask}
         updateTask={updateTask}
         toggleDone={toggleDone}
         deleteTask={deleteTask}
-        characterFilter={activeChar}
+        characterFilter={characterFilter}
         onDialogOpen={handleDialogOpen}
+        pendingImport={pendingImport}
+        onImportConsumed={onImportConsumed}
         debugMode={debugMode}
         onTriggerNeglect={debugMode ? triggerNeglect : undefined}
       />
@@ -81,6 +96,8 @@ export default function TaskScreen({ user, onCharColorChange, debugMode, nadeThr
         <DialogModal
           characterId={dialog.characterId}
           line={dialog.line}
+          showToast={showToast}
+          onCopyPrompt={dialog.rewardPrompt ? () => dialog.rewardPrompt : undefined}
           onClose={() => setDialog(null)}
         />
       )}

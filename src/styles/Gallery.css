@@ -1,0 +1,85 @@
+/* ギャラリースタイル — spec-phase4.md §7 */
+.gallery-section { margin-top: 16px; }
+
+.gallery-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.gallery-title {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.gallery-cell {
+  aspect-ratio: 832 / 1216;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  position: relative;
+}
+.gallery-cell img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+.gallery-add {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--color-card-bg);
+  border-style: dashed;
+  color: var(--color-muted);
+}
+.gallery-add-icon { font-size: 1.6rem; }
+
+/* 拡大表示 */
+.gallery-viewer-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+}
+.gallery-viewer-img {
+  max-width: 92vw;
+  max-height: 86vh;
+  object-fit: contain;
+  border-radius: 4px;
+}
+.gallery-viewer-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+  border: none;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+.gallery-viewer-prev { left: 12px; }
+.gallery-viewer-next { right: 12px; }
+.gallery-viewer-close, .gallery-viewer-delete {
+  position: absolute;
+  top: 12px;
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+.gallery-viewer-close { right: 12px; }
+.gallery-viewer-delete { left: 12px; }

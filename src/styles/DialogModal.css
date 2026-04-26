@@ -66,3 +66,41 @@
   border-radius: 50%;
 }
 .dialog-close:hover { background: var(--color-bg); }
+
+/* §6 レア演出 — ★4: 光彩ボーダー / ★5: 金色ボーダー + バッジ */
+.dialog-modal-rare4 {
+  box-shadow: 0 0 24px rgba(123, 104, 174, 0.55), 0 8px 32px rgba(0,0,0,0.18);
+  border: 2px solid #a899d4;
+}
+.dialog-modal-rare5 {
+  box-shadow: 0 0 32px rgba(255, 200, 60, 0.8), 0 8px 32px rgba(0,0,0,0.22);
+  border: 3px solid #f0c040;
+  background: linear-gradient(180deg, #fffbf0 0%, var(--color-card-bg) 60%);
+}
+.dialog-rare-badge {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  background: linear-gradient(135deg, #f0c040, #ffe082);
+  color: #6b4d00;
+  font-weight: 800;
+  font-size: 0.9rem;
+  padding: 3px 10px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(240, 192, 64, 0.5);
+}
+
+/* §7 プロンプトコピーボタン */
+.dialog-copy-btn {
+  margin-top: 4px;
+  padding: 8px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dialog-copy-btn:hover { background: var(--color-card-bg); border-color: var(--char-color); }
