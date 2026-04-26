@@ -1,32 +1,64 @@
-// ルートコンポーネント — onAuthStateChanged で認証状態を監視し画面を切り替える
+// ルートコンポーネント — 認証管理・メインメニュー・画面ルーティング
 import { useEffect, useState } from 'react'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { auth } from './firebase.js'
 import Login from './components/Login.jsx'
-import TaskList from './components/TaskList.jsx'
+import MainMenu from './components/MainMenu.jsx'
+import TaskScreen from './components/TaskScreen.jsx'
+import PlaceholderScreen from './components/PlaceholderScreen.jsx'
+
+// CSS変数をキャラテーマに切り替える — §3で使用。§2でルートに仕込む
+export function applyCharTheme(character) {
+  const root = document.documentElement
+  if (!character) {
+    root.style.removeProperty('--char-color')
+    root.style.removeProperty('--char-color-bg')
+    root.style.removeProperty('--char-color-accent')
+  } else {
+    root.style.setProperty('--char-color', character.color)
+    root.style.setProperty('--char-color-bg', character.colorBg)
+    root.style.setProperty('--char-color-accent', character.colorAccent)
+  }
+}
 
 export default function App() {
-  const [user, setUser] = useState(undefined) // undefined = 初期化中
+  const [user, setUser] = useState(undefined)
+  const [activeTab, setActiveTab] = useState('task')
+  // キャラタブ選択時のテーマカラー（null = 全員/ニュートラル）
+  const [charColor, setCharColor] = useState(null)
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u))
     return unsubscribe
   }, [])
 
-  if (user === undefined) return null // 認証状態確認中は何も表示しない
-
+  if (user === undefined) return null
   if (!user) return <Login />
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'task':
+        return <TaskScreen user={user} onCharColorChange={setCharColor} />
+      case 'notification':
+        return <PlaceholderScreen screenKey="notification" />
+      case 'character':
+        return <PlaceholderScreen screenKey="character" />
+      case 'gacha':
+        return <PlaceholderScreen screenKey="gacha" />
+      case 'settings':
+        // §7で実装。暫定プレースホルダー
+        return <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--color-muted)' }}>設定画面（準備中）</div>
+      default:
+        return null
+    }
+  }
 
   return (
     <div className="app">
-      <header className="app-header">
-        <h1 className="app-title">三姉妹タスクアプリ</h1>
-        <div className="app-header-right">
-          <span className="app-username">{user.displayName}</span>
-          <button className="btn-logout" onClick={() => signOut(auth)}>ログアウト</button>
-        </div>
-      </header>
-      <TaskList user={user} />
+      <MainMenu activeTab={activeTab} onTabChange={setActiveTab} charColor={charColor} />
+      <div className="app-content">
+        {renderContent()}
+      </div>
     </div>
   )
 }
