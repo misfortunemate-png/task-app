@@ -362,3 +362,18 @@ body {
 .task-card.overdue:not(.done) {
   background: #fff8f9;
 }
+
+/* ===== デバッグボタン（タスクリスト下部）===== */
+.debug-trigger-btn {
+  display: block;
+  margin: 12px auto 0;
+  padding: 6px 16px;
+  border: 1px dashed var(--color-border);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  cursor: pointer;
+  font-family: inherit;
+}
+.debug-trigger-btn:hover { background: var(--color-bg); }

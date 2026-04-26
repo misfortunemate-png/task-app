@@ -1,0 +1,103 @@
+/* なでなでモーダルスタイル — spec-phase3.md §6 */
+.nade-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.nade-modal {
+  background: var(--color-card-bg);
+  border-radius: 20px;
+  padding: 24px 20px;
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* 放置セリフ */
+.nade-neglect-speech {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+.nade-face { font-size: 1.3rem; }
+.nade-neglect-text {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.nade-task-title {
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+/* キャラemoji タップボタン */
+.nade-chara-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: transform 0.1s;
+  user-select: none;
+}
+.nade-chara-btn:active:not(:disabled) { transform: scale(0.92); }
+.nade-chara-btn:disabled { cursor: default; }
+.nade-chara-emoji { font-size: 4rem; display: block; line-height: 1; }
+
+/* なでなでセリフ */
+.nade-speech {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--color-text);
+  line-height: 1.5;
+  min-height: 40px;
+}
+
+.nade-debug {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  background: var(--color-bg);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.nade-unlock-msg {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #27ae60;
+}
+
+.nade-hint {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+}
+
+.nade-close {
+  margin-top: 4px;
+  padding: 8px 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: transparent;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  cursor: pointer;
+  font-family: inherit;
+}
+.nade-close:hover { background: var(--color-bg); }

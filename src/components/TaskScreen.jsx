@@ -1,17 +1,24 @@
-// タスク画面 — CharTab（2層目）+ TaskList + セリフモーダル管理
-// spec-phase3.md §2 §3 §4
-import { useState } from 'react'
+// タスク画面 — CharTab・TaskList・セリフモーダル・放置判定・なでなでモーダルを束ねる
+// spec-phase3.md §2 §3 §4 §6
+import { useState, useEffect } from 'react'
+import { updateDoc, doc } from 'firebase/firestore'
+import { db } from '../firebase.js'
 import CharTab from './CharTab.jsx'
 import TaskList from './TaskList.jsx'
 import DialogModal from './DialogModal.jsx'
+import NadeModal from './NadeModal.jsx'
+import { useTasks } from '../hooks/useTasks.js'
 import { getCharacterById } from '../data/characters.js'
 import { pickLine } from '../data/lines.js'
 
-export default function TaskScreen({ user, onCharColorChange }) {
-  const [activeChar, setActiveChar] = useState(null)
+const SS_KEY_LAST_NEGLECT = 'lastNeglectTaskId'
 
-  // セリフモーダル表示状態 — { characterId, line } | null
-  const [dialog, setDialog] = useState(null)
+export default function TaskScreen({ user, onCharColorChange, debugMode, nadeThreshold }) {
+  const { tasks, addTask, updateTask, toggleDone, deleteTask } = useTasks(user.uid)
+  const [activeChar, setActiveChar]     = useState(null)
+  const [dialog, setDialog]             = useState(null)
+  const [neglectModal, setNeglectModal] = useState(null)
+  const [neglectDone, setNeglectDone]   = useState(false) // マウントあたり1回のみ表示
 
   const handleCharChange = (charId) => {
     setActiveChar(charId)
@@ -19,26 +26,70 @@ export default function TaskScreen({ user, onCharColorChange }) {
     onCharColorChange(color)
   }
 
-  // TaskListから呼ばれる。event: 'register'|'complete'|'cancel'|'neglect'
   const handleDialogOpen = (event, characterId) => {
     if (!characterId) return
-    const line = pickLine(characterId, event)
-    setDialog({ characterId, line })
+    setDialog({ characterId, line: pickLine(characterId, event) })
+  }
+
+  // 放置判定 — tasksロード後に1回だけ実行
+  useEffect(() => {
+    if (neglectDone || !tasks || tasks.length === 0) return
+    const now = new Date()
+    const overdue = tasks.filter((t) => {
+      if (t.status === 'done' || !t.dueDate) return false
+      const d = t.dueDate.toDate ? t.dueDate.toDate() : new Date(t.dueDate)
+      return d < now
+    })
+    if (overdue.length === 0) return
+    setNeglectDone(true)
+
+    const lastId = sessionStorage.getItem(SS_KEY_LAST_NEGLECT)
+    const others = overdue.filter((t) => t.id !== lastId)
+    const target = others.length > 0 ? others[0] : overdue[0]
+    sessionStorage.setItem(SS_KEY_LAST_NEGLECT, target.id)
+    setNeglectModal({ task: target, line: pickLine(target.character, 'neglect') })
+  }, [tasks, neglectDone])
+
+  // なでなでロック解除
+  const handleUnlock = (taskId) =>
+    updateDoc(doc(db, 'tasks', taskId), { dueDateUnlocked: true })
+
+  // デバッグ用: 放置判定手動トリガー
+  const triggerNeglect = () => {
+    const target = tasks.find((t) => t.status !== 'done' && t.dueDate)
+    if (!target) return
+    setNeglectModal({ task: target, line: pickLine(target.character, 'neglect') })
   }
 
   return (
     <div className="task-screen">
       <CharTab activeChar={activeChar} onCharChange={handleCharChange} />
       <TaskList
-        user={user}
+        tasks={tasks}
+        addTask={addTask}
+        updateTask={updateTask}
+        toggleDone={toggleDone}
+        deleteTask={deleteTask}
         characterFilter={activeChar}
         onDialogOpen={handleDialogOpen}
+        debugMode={debugMode}
+        onTriggerNeglect={debugMode ? triggerNeglect : undefined}
       />
       {dialog && (
         <DialogModal
           characterId={dialog.characterId}
           line={dialog.line}
           onClose={() => setDialog(null)}
+        />
+      )}
+      {neglectModal && (
+        <NadeModal
+          task={neglectModal.task}
+          neglectLine={neglectModal.line}
+          nadeThreshold={nadeThreshold}
+          debugMode={debugMode}
+          onClose={() => setNeglectModal(null)}
+          onUnlock={handleUnlock}
         />
       )}
     </div>

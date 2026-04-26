@@ -1,7 +1,6 @@
 // タスク一覧 — ステータスタブ切り替え・キャラフィルタ・FAB・フォーム管理
-// spec-phase3.md §3（characterFilter追加）
+// tasks と CRUD 操作は TaskScreen から受け取る — spec-phase3.md §3 §4 §6
 import { useState } from 'react'
-import { useTasks } from '../hooks/useTasks.js'
 import TaskCard from './TaskCard.jsx'
 import TaskForm from './TaskForm.jsx'
 
@@ -11,15 +10,15 @@ const STATUS_TABS = [
   { key: 'all',    label: 'すべて' },
 ]
 
-// characterFilter: null（全員）| character.id string
-// onDialogOpen: セリフモーダル表示コールバック（§4で追加）
-export default function TaskList({ user, characterFilter, onDialogOpen }) {
-  const { tasks, addTask, updateTask, toggleDone, deleteTask } = useTasks(user.uid)
-  const [tab, setTab] = useState('active')
+export default function TaskList({
+  tasks, addTask, updateTask, toggleDone, deleteTask,
+  characterFilter, onDialogOpen,
+  debugMode, onTriggerNeglect,
+}) {
+  const [tab, setTab]       = useState('active')
   const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing] = useState(null)
+  const [editing, setEditing]   = useState(null)
 
-  // キャラフィルタ → ステータスフィルタの順で絞り込む
   const charFiltered = characterFilter
     ? tasks.filter((t) => t.character === characterFilter)
     : tasks
@@ -30,7 +29,6 @@ export default function TaskList({ user, characterFilter, onDialogOpen }) {
   const handleAdd = async (data) => {
     await addTask(data)
     setFormOpen(false)
-    // §4でセリフモーダル（register）を呼び出す
     onDialogOpen?.('register', data.character)
   }
 
@@ -41,15 +39,14 @@ export default function TaskList({ user, characterFilter, onDialogOpen }) {
 
   const handleToggle = async (task) => {
     await toggleDone(task)
-    // §4でセリフモーダル（complete）を呼び出す
     if (task.status === 'active') {
       onDialogOpen?.('complete', task.character)
     }
   }
 
   const handleDelete = async (task) => {
+    if (!window.confirm(`「${task.title}」を削除しますか？`)) return
     await deleteTask(task.id)
-    // §4でセリフモーダル（cancel）を呼び出す
     onDialogOpen?.('cancel', task.character)
   }
 
@@ -84,6 +81,16 @@ export default function TaskList({ user, characterFilter, onDialogOpen }) {
       )}
 
       <button className="fab" onClick={() => setFormOpen(true)} aria-label="タスクを追加">＋</button>
+
+      {/* デバッグ: 放置判定手動トリガー */}
+      {debugMode && onTriggerNeglect && (
+        <button
+          className="debug-trigger-btn"
+          onClick={onTriggerNeglect}
+        >
+          🐛 放置判定を実行
+        </button>
+      )}
 
       {formOpen && (
         <TaskForm onSubmit={handleAdd} onCancel={() => setFormOpen(false)} />

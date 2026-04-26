@@ -8,10 +8,13 @@ import TaskScreen from './components/TaskScreen.jsx'
 import PlaceholderScreen from './components/PlaceholderScreen.jsx'
 
 export default function App() {
-  const [user, setUser] = useState(undefined)
+  const [user, setUser]         = useState(undefined)
   const [activeTab, setActiveTab] = useState('task')
-  // キャラタブ選択時のテーマカラー（null = 全員/ニュートラル）
   const [charColor, setCharColor] = useState(null)
+
+  // §7設定画面から読む値。App起動時にlocalStorageから取得
+  const debugMode     = localStorage.getItem('debugMode') === 'true'
+  const nadeThreshold = parseInt(localStorage.getItem('nadeThreshold') ?? '5', 10)
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u))
@@ -24,7 +27,14 @@ export default function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'task':
-        return <TaskScreen user={user} onCharColorChange={setCharColor} />
+        return (
+          <TaskScreen
+            user={user}
+            onCharColorChange={setCharColor}
+            debugMode={debugMode}
+            nadeThreshold={nadeThreshold}
+          />
+        )
       case 'notification':
         return <PlaceholderScreen screenKey="notification" />
       case 'character':
