@@ -18,10 +18,28 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* 全体: Klee One、見出し/タブは Zen Maru Gothic — spec-phase3.md §9 */
+  font-family: 'Klee One', sans-serif;
   background: var(--color-bg);
   color: var(--color-text);
   min-height: 100dvh;
+}
+
+/* タブラベル・見出しに Zen Maru Gothic */
+.main-menu-label,
+.modal-title,
+.settings-title,
+.settings-section-title,
+.placeholder-coming-soon {
+  font-family: 'Zen Maru Gothic', sans-serif;
+}
+
+/* セリフテキストに Klee One（明示） */
+.dialog-text,
+.nade-neglect-text,
+.nade-speech p,
+.placeholder-text {
+  font-family: 'Klee One', sans-serif;
 }
 
 /* ===== App ===== */
