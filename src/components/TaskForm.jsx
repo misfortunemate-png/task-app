@@ -1,7 +1,10 @@
-// タスク登録・編集フォーム — キャラ選択（必須）追加 — spec-phase3.md §3
-// dueDate（§5）は別途追加予定
+// タスク登録・編集フォーム — キャラ選択（必須）+ 完了予定日（任意）
+// spec-phase3.md §3 §5
 import { useState } from 'react'
 import { CHARACTERS } from '../data/characters.js'
+
+// "YYYY-MM-DD" 文字列を今日以降に制限するための最小値
+const todayStr = () => new Date().toISOString().split('T')[0]
 
 export const CATEGORIES = [
   { id: 'cleaning',    emoji: '🧹', label: '掃除' },
@@ -25,6 +28,14 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
   // キャラ選択は必須。既存タスクの編集時は初期値を引き継ぐ
   const [character, setCharacter] = useState(initial?.character ?? '')
   const [charError, setCharError] = useState(false)
+  // dueDate: "YYYY-MM-DD" 文字列 or '' （空 = 設定なし）
+  // Firestoreには Timestamp または null で保存。変換は onSubmit 呼び出し側で行う
+  const [dueDate, setDueDate] = useState(
+    initial?.dueDate?.toDate
+      ? initial.dueDate.toDate().toISOString().split('T')[0]
+      : (initial?.dueDate ?? '')
+  )
+  const [dueDateError, setDueDateError] = useState('')
 
   const isEdit = !!initial
 
@@ -35,7 +46,22 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
       setCharError(true)
       return
     }
-    onSubmit({ title: title.trim(), category, note: note.trim(), character })
+    // 完了予定日バリデーション: 過去日は不可
+    if (dueDate && dueDate < todayStr()) {
+      setDueDateError('過去の日付は設定できません')
+      return
+    }
+    // 編集時の後方延長チェック: dueDateUnlocked=falseかつ元の日付より後は不可
+    if (isEdit && dueDate && initial.dueDate && !initial.dueDateUnlocked) {
+      const origStr = initial.dueDate?.toDate
+        ? initial.dueDate.toDate().toISOString().split('T')[0]
+        : initial.dueDate
+      if (dueDate > origStr) {
+        setDueDateError('なでなでで期限延長のロックを解除してください')
+        return
+      }
+    }
+    onSubmit({ title: title.trim(), category, note: note.trim(), character, dueDate: dueDate || null })
   }
 
   return (
@@ -96,6 +122,25 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* 完了予定日（任意）*/}
+          <div className="form-group">
+            <label className="form-label">完了予定日（任意）</label>
+            <input
+              type="date"
+              className="form-input"
+              value={dueDate}
+              min={todayStr()}
+              onChange={(e) => { setDueDate(e.target.value); setDueDateError('') }}
+            />
+            {/* 編集時の後方延長制限の注記 */}
+            {isEdit && initial?.dueDate && !initial?.dueDateUnlocked && (
+              <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginTop: 4 }}>
+                期限の延長にはなでなでが必要です
+              </p>
+            )}
+            {dueDateError && <p className="form-error">{dueDateError}</p>}
           </div>
 
           {/* メモ */}

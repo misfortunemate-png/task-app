@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import {
   collection, query, where,
   onSnapshot, addDoc, updateDoc, deleteDoc,
-  doc, serverTimestamp,
+  doc, serverTimestamp, Timestamp,
 } from 'firebase/firestore'
 import { db } from '../firebase.js'
 
@@ -30,7 +30,11 @@ export function useTasks(uid) {
     return unsubscribe
   }, [uid])
 
-  // character・dueDate・dueDateUnlocked は spec-phase3.md §3 で追加
+  // "YYYY-MM-DD" 文字列を Firestore Timestamp に変換するヘルパー
+  const toTimestamp = (dateStr) =>
+    dateStr ? Timestamp.fromDate(new Date(dateStr + 'T00:00:00')) : null
+
+  // character・dueDate・dueDateUnlocked は spec-phase3.md §3 §5 で追加
   const addTask = (data) =>
     addDoc(collection(db, 'tasks'), {
       ...data,
@@ -38,12 +42,18 @@ export function useTasks(uid) {
       status: 'active',
       createdAt: serverTimestamp(),
       completedAt: null,
-      dueDate: data.dueDate ?? null,
+      dueDate: toTimestamp(data.dueDate),
       dueDateUnlocked: false,
     })
 
-  const updateTask = (id, data) =>
-    updateDoc(doc(db, 'tasks', id), data)
+  const updateTask = (id, data) => {
+    // dueDate が文字列で来た場合は Timestamp に変換
+    const payload = { ...data }
+    if (typeof payload.dueDate === 'string') {
+      payload.dueDate = toTimestamp(payload.dueDate)
+    }
+    return updateDoc(doc(db, 'tasks', id), payload)
+  }
 
   const toggleDone = (task) =>
     updateDoc(doc(db, 'tasks', task.id), {

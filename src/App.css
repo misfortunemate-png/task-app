@@ -341,9 +341,24 @@ body {
   margin-top: 4px;
 }
 
-/* ===== タスクカードのキャラタグ ===== */
+/* ===== タスクカードのキャラタグ・期限日 ===== */
 .task-chara-tag {
   font-size: 0.75rem;
   font-weight: 600;
   border-radius: 4px;
+}
+
+.task-due {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.task-due-overdue {
+  color: var(--color-hakone);
+  font-weight: 600;
+}
+
+/* 期限超過カードの軽微な強調 */
+.task-card.overdue:not(.done) {
+  background: #fff8f9;
 }
