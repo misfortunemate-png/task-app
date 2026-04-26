@@ -63,11 +63,11 @@ const moodLabel = (m) => {
 export default function CharIndividualScreen({ charId, tasks, userDoc, updateUserDoc, showToast }) {
   const chara = getCharacterById(charId)
 
-  // 修正1: charId切替を検知し、sessionStorageから該当キャラのカウントを再読み込み
-  // 修正B: クールダウンは廃止。リセット条件はキャラ切替時のみ。
+  // 修正1+B+: キャラ切替＝完全リセット（sessionStorageからの復元はしない）
   const [sessionTaps, setSessionTaps] = useState(() => readSessionTaps(charId))
   useEffect(() => {
-    setSessionTaps(readSessionTaps(charId))
+    setSessionTaps(0)
+    writeSessionTaps(charId, 0)
   }, [charId])
 
   // 累計のFirestore反映を簡易デバウンス
