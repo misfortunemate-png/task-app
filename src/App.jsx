@@ -6,15 +6,21 @@ import Login from './components/Login.jsx'
 import MainMenu from './components/MainMenu.jsx'
 import TaskScreen from './components/TaskScreen.jsx'
 import PlaceholderScreen from './components/PlaceholderScreen.jsx'
+import SettingsScreen from './components/SettingsScreen.jsx'
 
 export default function App() {
   const [user, setUser]         = useState(undefined)
   const [activeTab, setActiveTab] = useState('task')
   const [charColor, setCharColor] = useState(null)
 
-  // §7設定画面から読む値。App起動時にlocalStorageから取得
-  const debugMode     = localStorage.getItem('debugMode') === 'true'
-  const nadeThreshold = parseInt(localStorage.getItem('nadeThreshold') ?? '5', 10)
+  // §7設定値。設定変更時に再レンダリングするためstateで管理
+  const [debugMode, setDebugMode]         = useState(localStorage.getItem('debugMode') === 'true')
+  const [nadeThreshold, setNadeThreshold] = useState(parseInt(localStorage.getItem('nadeThreshold') ?? '5', 10))
+
+  const handleSettingsChange = (s) => {
+    setDebugMode(s.debugMode)
+    setNadeThreshold(s.nadeThreshold)
+  }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u))
@@ -42,8 +48,7 @@ export default function App() {
       case 'gacha':
         return <PlaceholderScreen screenKey="gacha" />
       case 'settings':
-        // §7で実装。暫定プレースホルダー
-        return <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--color-muted)' }}>設定画面（準備中）</div>
+        return <SettingsScreen onSettingsChange={handleSettingsChange} />
       default:
         return null
     }

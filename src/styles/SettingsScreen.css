@@ -1,0 +1,112 @@
+/* 設定画面スタイル — spec-phase3.md §7 */
+.settings-screen {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 16px 16px 80px;
+}
+
+.settings-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--color-text);
+}
+
+.settings-section {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.settings-section-disabled { opacity: 0.55; }
+
+.settings-section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  margin-bottom: 10px;
+}
+
+.settings-wip {
+  font-size: 0.7rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--color-muted);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.settings-row { display: flex; align-items: center; gap: 8px; }
+.settings-number { width: 80px; }
+.settings-unit { font-size: 0.85rem; color: var(--color-muted); }
+
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.settings-muted { font-size: 0.82rem; color: var(--color-muted); }
+
+/* キャラパラメータ */
+.settings-params { margin-bottom: 8px; }
+.settings-params-summary {
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.settings-params-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+.settings-params-table td { padding: 3px 6px; font-size: 0.78rem; }
+.param-key { color: var(--color-muted); width: 50%; }
+.param-val { font-weight: 600; }
+
+/* デバッグパネル */
+.debug-panel { border-color: #f0c040; background: #fffdf0; }
+
+.debug-block { margin-bottom: 16px; }
+.debug-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  margin-bottom: 6px;
+}
+.debug-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.debug-row .form-select { flex: 1; min-width: 80px; }
+
+.debug-line-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--color-bg);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.debug-lines-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 6px;
+  font-size: 0.75rem;
+}
+.debug-lines-item { margin-bottom: 8px; }
+.debug-lines-key { font-weight: 700; color: var(--color-muted); display: block; margin-bottom: 2px; }
+.debug-lines-text { color: var(--color-text); margin-left: 8px; }
+
+.debug-param-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+.debug-param-input { width: 80px; padding: 4px 8px; font-size: 0.82rem; }
