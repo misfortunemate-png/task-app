@@ -20,7 +20,7 @@ export const CHARACTERS = [
     notes: '褒められると弱い。スキンシップに弱い。放置されると拗ねる。仕事の成果より一緒にいることに価値を置く。',
   },
   {
-    id: 'creede',
+    id: 'cleade',
     emoji: '📘',
     name: 'クリーデ',
     title: '貿易商の帳簿番 ／ 次女',
@@ -37,7 +37,7 @@ export const CHARACTERS = [
     notes: '朝昼は堅く、夜と休日はあまあま。タスク完了を正当に評価する。スキンシップでごまかされにくい。',
   },
   {
-    id: 'fran',
+    id: 'frane',
     emoji: '🛸',
     name: 'フラン',
     title: '艦内補佐アンドロイド ／ 末妹',
