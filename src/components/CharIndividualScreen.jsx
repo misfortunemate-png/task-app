@@ -1,6 +1,6 @@
-// キャラ画面 — 個別キャラタブ — spec-phase4.md §2 + 修正指示書 修正1/修正2
+// キャラ画面 — 個別キャラタブ — spec-phase4.md §2 + 修正指示書 修正1/修正2 + 修正A/B
 // 縦スクロール: つんつんエリア → 機嫌+キャラ情報 → ギャラリー
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { getCharacterById, CHARACTERS } from '../data/characters.js'
 import { POKE_LINES, POKE_THRESHOLDS, FACE_MAP } from '../data/lines.js'
@@ -10,7 +10,6 @@ import Gallery from './Gallery.jsx'
 import '../styles/CharScreen.css'
 
 const SS_KEY_POKE = 'pokeSession'
-const POKE_COOLDOWN_MS = 30_000  // 修正1: 最終タップから30秒で session を 0 にリセット
 
 const stageOf = (taps) => {
   let stage = -1
@@ -65,13 +64,12 @@ export default function CharIndividualScreen({ charId, tasks, userDoc, updateUse
   const chara = getCharacterById(charId)
 
   // 修正1: charId切替を検知し、sessionStorageから該当キャラのカウントを再読み込み
+  // 修正B: クールダウンは廃止。リセット条件はキャラ切替時のみ。
   const [sessionTaps, setSessionTaps] = useState(() => readSessionTaps(charId))
   useEffect(() => {
     setSessionTaps(readSessionTaps(charId))
   }, [charId])
 
-  // 修正1: クールダウン用タイマー
-  const cooldownTimer = useRef(null)
   // 累計のFirestore反映を簡易デバウンス
   const writePending = useRef(0)
   const writeTimer   = useRef(null)
@@ -82,19 +80,10 @@ export default function CharIndividualScreen({ charId, tasks, userDoc, updateUse
   const nextThreshold = POKE_THRESHOLDS[stage + 1]
   const remainingToNext = nextThreshold ? nextThreshold - sessionTaps : null
 
-  const resetSession = useCallback(() => {
-    setSessionTaps(0)
-    writeSessionTaps(charId, 0)
-  }, [charId])
-
   const handlePoke = () => {
     const newSession = sessionTaps + 1
     setSessionTaps(newSession)
     writeSessionTaps(charId, newSession)
-
-    // 修正1: クールダウン延長
-    if (cooldownTimer.current) clearTimeout(cooldownTimer.current)
-    cooldownTimer.current = setTimeout(resetSession, POKE_COOLDOWN_MS)
 
     // 累計はバッチ反映
     writePending.current += 1
@@ -111,10 +100,8 @@ export default function CharIndividualScreen({ charId, tasks, userDoc, updateUse
 
   // クリーンアップ
   useEffect(() => {
-    return () => {
-      if (cooldownTimer.current) clearTimeout(cooldownTimer.current)
-      if (writeTimer.current)    clearTimeout(writeTimer.current)
-    }
+    const t = writeTimer
+    return () => { if (t.current) clearTimeout(t.current) }
   }, [])
 
   // キャラ統計
@@ -145,7 +132,7 @@ export default function CharIndividualScreen({ charId, tasks, userDoc, updateUse
         <motion.div
           className="poke-image-wrap"
           whileTap={{ scale: 0.95 }}
-          onClick={handlePoke}
+          onTap={handlePoke}
           role="button"
           aria-label={`${chara.name}をつんつん`}
         >

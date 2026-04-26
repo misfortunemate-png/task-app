@@ -7,7 +7,9 @@ import { startOfWeek, weekKey } from './week.js'
 
 const LS_LAST_RESET = 'lastResetWeek'
 
-// force=true で lastResetWeek チェックをスキップして強制実行
+// force=true: lastResetWeekチェックをスキップ、かつ status='done' の全タスクを削除する
+//   （デバッグ「全完了タスク削除＋アイテム倉庫消去＋ランキングリセット」用 — 修正C）
+// force=false（自動）: 前週(月-日)の完了タスクのみ削除する（従来通り）
 // 戻り値: { skipped: bool, deletedTasks: number }
 export const runWeeklyReset = async (uid, { force = false } = {}) => {
   if (!uid) return { skipped: true, deletedTasks: 0 }
@@ -16,7 +18,6 @@ export const runWeeklyReset = async (uid, { force = false } = {}) => {
     return { skipped: true, deletedTasks: 0 }
   }
 
-  // 前週(月-日)の完了タスクを削除
   const thisWeekStart = startOfWeek().getTime()
   const snap = await getDocs(query(
     collection(db, 'tasks'),
@@ -25,13 +26,15 @@ export const runWeeklyReset = async (uid, { force = false } = {}) => {
   ))
   let deleted = 0
   for (const d of snap.docs) {
-    const ms = d.data().completedAt?.toMillis?.()
-    if (ms != null && ms < thisWeekStart) {
-      try {
-        await deleteDoc(doc(db, 'tasks', d.id))
-        deleted += 1
-      } catch (e) { console.error('週次リセット削除失敗:', e) }
+    // 修正C: forceは全done削除、自動は前週分のみ
+    if (!force) {
+      const ms = d.data().completedAt?.toMillis?.()
+      if (ms == null || ms >= thisWeekStart) continue
     }
+    try {
+      await deleteDoc(doc(db, 'tasks', d.id))
+      deleted += 1
+    } catch (e) { console.error('週次リセット削除失敗:', e) }
   }
 
   // 修正3: アイテム倉庫もリセット
