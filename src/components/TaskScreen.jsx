@@ -13,8 +13,8 @@ import { pickLine } from '../data/lines.js'
 
 const SS_KEY_LAST_NEGLECT = 'lastNeglectTaskId'
 
-export default function TaskScreen({ user, onCharColorChange, debugMode, nadeThreshold }) {
-  const { tasks, addTask, updateTask, toggleDone, deleteTask } = useTasks(user.uid)
+export default function TaskScreen({ user, onCharColorChange, debugMode, nadeThreshold, showToast }) {
+  const { tasks, addTask, updateTask, toggleDone, deleteTask } = useTasks(user.uid, showToast)
   const [activeChar, setActiveChar]     = useState(null)
   const [dialog, setDialog]             = useState(null)
   const [neglectModal, setNeglectModal] = useState(null)

@@ -7,6 +7,8 @@ import MainMenu from './components/MainMenu.jsx'
 import TaskScreen from './components/TaskScreen.jsx'
 import PlaceholderScreen from './components/PlaceholderScreen.jsx'
 import SettingsScreen from './components/SettingsScreen.jsx'
+import { ToastContainer } from './components/Toast.jsx'
+import { useToast } from './hooks/useToast.js'
 
 export default function App() {
   const [user, setUser]         = useState(undefined)
@@ -16,6 +18,7 @@ export default function App() {
   // §7設定値。設定変更時に再レンダリングするためstateで管理
   const [debugMode, setDebugMode]         = useState(localStorage.getItem('debugMode') === 'true')
   const [nadeThreshold, setNadeThreshold] = useState(parseInt(localStorage.getItem('nadeThreshold') ?? '5', 10))
+  const { toasts, showToast, removeToast } = useToast()
 
   const handleSettingsChange = (s) => {
     setDebugMode(s.debugMode)
@@ -39,6 +42,7 @@ export default function App() {
             onCharColorChange={setCharColor}
             debugMode={debugMode}
             nadeThreshold={nadeThreshold}
+            showToast={showToast}
           />
         )
       case 'notification':
@@ -60,6 +64,7 @@ export default function App() {
       <div className="app-content">
         {renderContent()}
       </div>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   )
 }
