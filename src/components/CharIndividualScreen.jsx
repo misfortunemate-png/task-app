@@ -73,6 +73,8 @@ export default function CharIndividualScreen({ charId, tasks, userDoc, updateUse
   // 累計のFirestore反映を簡易デバウンス
   const writePending = useRef(0)
   const writeTimer   = useRef(null)
+  // motion.div の onTap が一部デバイスで pointerup+click 由来で重複発火するケースの抑止
+  const lastTapAt    = useRef(0)
 
   const cumulative = userDoc.pokeCount?.[charId] ?? 0
   const stage = stageOf(sessionTaps)
@@ -81,9 +83,17 @@ export default function CharIndividualScreen({ charId, tasks, userDoc, updateUse
   const remainingToNext = nextThreshold ? nextThreshold - sessionTaps : null
 
   const handlePoke = () => {
-    const newSession = sessionTaps + 1
-    setSessionTaps(newSession)
-    writeSessionTaps(charId, newSession)
+    // 同一tapの重複発火を120ms以内なら無視（motion onTapの既知挙動への対処）
+    const now = Date.now()
+    if (now - lastTapAt.current < 120) return
+    lastTapAt.current = now
+
+    // 関数形式setStateでstale closure起因の取りこぼしも防止
+    setSessionTaps((prev) => {
+      const next = prev + 1
+      writeSessionTaps(charId, next)
+      return next
+    })
 
     // 累計はバッチ反映
     writePending.current += 1
