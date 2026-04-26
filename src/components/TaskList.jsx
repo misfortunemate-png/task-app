@@ -67,8 +67,8 @@ export default function TaskList({
   const handleToggle = async (task) => {
     await toggleDone(task)
     if (task.status === 'active') {
-      // §7: 完了時にrewardPromptをDialogModalへ渡す
-      onDialogOpen?.('complete', task.character, { rewardPrompt: task.rewardPrompt })
+      // 修正4: 完了時にrewardPromptとtitleをTaskScreenへ渡し、ガチャ倉庫に保存させる
+      onDialogOpen?.('complete', task.character, { rewardPrompt: task.rewardPrompt, title: task.title })
     }
   }
 

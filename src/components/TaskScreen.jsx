@@ -39,10 +39,23 @@ export default function TaskScreen({
   const handleDialogOpen = (event, characterId, extras = {}) => {
     if (!characterId) return
     const line = pickLine(characterId, event, 'generic', buildPickOpts())
-    setDialog({ characterId, line, rewardPrompt: extras.rewardPrompt })
+    setDialog({ characterId, line })
     // §4: タスク完了時にガチャチケット +1
+    // 修正4: rewardPrompt があれば inventory に type='prompt' で追加
     if (event === 'complete' && updateUserDoc) {
-      updateUserDoc({ gachaTickets: (userDoc?.gachaTickets ?? 0) + 1 })
+      const patch = { gachaTickets: (userDoc?.gachaTickets ?? 0) + 1 }
+      if (extras.rewardPrompt) {
+        const inv = userDoc?.gachaInventory ?? []
+        patch.gachaInventory = [...inv, {
+          type: 'prompt',
+          id: `prompt_${Date.now()}`,
+          character: characterId,
+          title: extras.title ?? '',
+          prompt: extras.rewardPrompt,
+          createdAt: Date.now(),
+        }]
+      }
+      updateUserDoc(patch)
     }
   }
 
@@ -96,8 +109,6 @@ export default function TaskScreen({
         <DialogModal
           characterId={dialog.characterId}
           line={dialog.line}
-          showToast={showToast}
-          onCopyPrompt={dialog.rewardPrompt ? () => dialog.rewardPrompt : undefined}
           onClose={() => setDialog(null)}
         />
       )}

@@ -85,6 +85,24 @@
 .gacha-inv-cell:hover { transform: translateY(-2px); }
 
 .gacha-inv-cell.rare-4 { box-shadow: 0 0 8px rgba(123,104,174,0.3); }
+/* 修正4: プロンプト型セル */
+.gacha-inv-prompt {
+  border-style: dashed;
+  background: var(--color-bg);
+}
+.gacha-inv-copy {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text);
+  cursor: pointer;
+}
+.gacha-inv-copy:hover { border-color: var(--char-color); }
+
 .gacha-inv-cell.rare-5 {
   box-shadow: 0 0 12px rgba(240,192,64,0.5);
   background: linear-gradient(180deg, #fffbf0 0%, var(--color-card-bg) 70%);

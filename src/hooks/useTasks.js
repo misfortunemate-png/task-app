@@ -7,25 +7,7 @@ import {
   doc, serverTimestamp, Timestamp,
 } from 'firebase/firestore'
 import { db } from '../firebase.js'
-import { startOfWeek, weekKey } from '../utils/week.js'
-
-const LS_LAST_RESET = 'lastResetWeek'
-
-// §B2 週次リセット: 月曜以降に開いた際、前週(月〜日)の完了タスクを削除する
-const runWeeklyReset = async (tasks) => {
-  const currentWeek = weekKey()
-  if (localStorage.getItem(LS_LAST_RESET) === currentWeek) return
-  const thisWeekStart = startOfWeek().getTime()
-  const stale = tasks.filter((t) => {
-    if (t.status !== 'done') return false
-    const ms = t.completedAt?.toMillis?.()
-    return ms != null && ms < thisWeekStart
-  })
-  for (const t of stale) {
-    try { await deleteDoc(doc(db, 'tasks', t.id)) } catch (e) { console.error('週次リセット削除失敗:', e) }
-  }
-  localStorage.setItem(LS_LAST_RESET, currentWeek)
-}
+import { runWeeklyReset } from '../utils/weeklyReset.js'
 
 // showToast: (message, type) => void — §8 エラー時にトースト通知
 export function useTasks(uid, showToast) {
@@ -42,10 +24,10 @@ export function useTasks(uid, showToast) {
       const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
       docs.sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0))
       setTasks(docs)
-      // 初回ロード時に週次リセット判定
+      // 初回ロード時に週次リセット判定（修正3: gachaInventoryも消去される）
       if (!resetDone) {
         setResetDone(true)
-        runWeeklyReset(docs).catch((e) => console.error(e))
+        runWeeklyReset(uid).catch((e) => console.error(e))
       }
     }, (err) => {
       console.error('Firestore読み取りエラー:', err)

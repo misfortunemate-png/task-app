@@ -29,8 +29,8 @@ const fireConfettiByRarity = (rarity, charEmoji) => {
 // characterId: string
 // line: { text, face, rarity? }
 // onClose: () => void
-// onCopyPrompt: () => string | null  ご褒美プロンプト（任意）。指定時はコピーボタン表示 — §7
-export default function DialogModal({ characterId, line, onClose, onCopyPrompt, showToast }) {
+// 修正4: ご褒美プロンプトは倉庫に保存される設計に変更したため onCopyPrompt は廃止
+export default function DialogModal({ characterId, line, onClose }) {
   const chara = getCharacterById(characterId)
   const fired = useRef(false)
 
@@ -49,30 +49,6 @@ export default function DialogModal({ characterId, line, onClose, onCopyPrompt, 
   const rareClass =
     rarity >= 5 ? ' dialog-modal-rare5' :
     rarity >= 4 ? ' dialog-modal-rare4' : ''
-
-  // §7: プロンプトコピー
-  const handleCopy = async () => {
-    const text = onCopyPrompt?.()
-    if (!text) return
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text)
-      } else {
-        // フォールバック
-        const ta = document.createElement('textarea')
-        ta.value = text
-        ta.style.position = 'fixed'
-        ta.style.opacity = '0'
-        document.body.appendChild(ta)
-        ta.select()
-        document.execCommand('copy')
-        document.body.removeChild(ta)
-      }
-      showToast?.('コピーしました', 'success')
-    } catch {
-      showToast?.('コピーに失敗しました', 'error')
-    }
-  }
 
   return (
     <AnimatePresence>
@@ -106,13 +82,6 @@ export default function DialogModal({ characterId, line, onClose, onCopyPrompt, 
               {chara.name}
             </span>
           </div>
-
-          {/* §7: プロンプトコピーボタン */}
-          {onCopyPrompt && (
-            <button className="dialog-copy-btn" onClick={handleCopy}>
-              📋 プロンプトをコピー
-            </button>
-          )}
 
           <button className="dialog-close" onClick={onClose} aria-label="閉じる">✕</button>
         </motion.div>

@@ -65,6 +65,22 @@
 .char-info-title { font-size: 0.78rem; color: var(--color-muted); margin-bottom: 8px; }
 .char-info-bio { font-size: 0.84rem; line-height: 1.6; margin-bottom: 12px; }
 
+/* 修正2: 機嫌表記 */
+.char-mood-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 2px solid;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  background: var(--color-bg);
+  font-weight: 700;
+}
+.char-mood-label { font-family: 'Zen Maru Gothic', sans-serif; font-size: 1rem; }
+.char-mood-value { font-size: 0.78rem; opacity: 0.7; font-weight: 600; }
+
 .char-info-stats {
   display: flex;
   gap: 12px;

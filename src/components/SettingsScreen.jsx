@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { CHARACTERS } from '../data/characters.js'
 import { LINES, FACE_MAP } from '../data/lines.js'
 import { pickLine } from '../data/lines.js'
+import { runWeeklyReset } from '../utils/weeklyReset.js'
 import '../styles/SettingsScreen.css'
 
 // 設定値を localStorage から読む（デフォルト付き）
@@ -13,7 +14,8 @@ const readSettings = () => ({
 })
 
 // onSettingsChange: 設定変更時に App.jsx の再レンダリングを促すコールバック
-export default function SettingsScreen({ onSettingsChange }) {
+// user / showToast: 修正3 デバッグの週次リセット実行に使用
+export default function SettingsScreen({ onSettingsChange, user, showToast }) {
   const [settings, setSettings] = useState(readSettings)
 
   // デバッグパネルの状態
@@ -139,6 +141,24 @@ export default function SettingsScreen({ onSettingsChange }) {
       {settings.debugMode && (
         <section className="settings-section debug-panel">
           <h3 className="settings-section-title">🐛 デバッグパネル</h3>
+
+          {/* 修正3: 週次リセット手動実行 */}
+          <div className="debug-block">
+            <p className="debug-label">週次リセット（前週doneタスク削除 + アイテム倉庫消去）</p>
+            <button
+              className="btn-cancel"
+              onClick={async () => {
+                try {
+                  const r = await runWeeklyReset(user?.uid, { force: true })
+                  showToast?.(`週次リセットを実行しました（${r.deletedTasks}件削除）`, 'success')
+                } catch {
+                  showToast?.('週次リセットに失敗しました', 'error')
+                }
+              }}
+            >
+              週次リセット実行
+            </button>
+          </div>
 
           {/* §5/§6 時間帯・レア度の強制設定 */}
           <div className="debug-block">
