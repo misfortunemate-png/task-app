@@ -3,8 +3,16 @@
 import { useState } from 'react'
 import { CHARACTERS } from '../data/characters.js'
 
-// "YYYY-MM-DD" 文字列を今日以降に制限するための最小値
-const todayStr = () => new Date().toISOString().split('T')[0]
+// DateをローカルタイムゾーンでYYYY-MM-DD文字列に変換する
+// toISOString()はUTC基準のため、JST(+9h)環境では前日になるバグを防ぐ
+const toLocalDateStr = (date) => {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+const todayStr = () => toLocalDateStr(new Date())
 
 export const CATEGORIES = [
   { id: 'cleaning',    emoji: '🧹', label: '掃除' },
@@ -32,7 +40,7 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
   // Firestoreには Timestamp または null で保存。変換は onSubmit 呼び出し側で行う
   const [dueDate, setDueDate] = useState(
     initial?.dueDate?.toDate
-      ? initial.dueDate.toDate().toISOString().split('T')[0]
+      ? toLocalDateStr(initial.dueDate.toDate())
       : (initial?.dueDate ?? '')
   )
   const [dueDateError, setDueDateError] = useState('')
@@ -54,7 +62,7 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
     // 編集時の後方延長チェック: dueDateUnlocked=falseかつ元の日付より後は不可
     if (isEdit && dueDate && initial.dueDate && !initial.dueDateUnlocked) {
       const origStr = initial.dueDate?.toDate
-        ? initial.dueDate.toDate().toISOString().split('T')[0]
+        ? toLocalDateStr(initial.dueDate.toDate())
         : initial.dueDate
       if (dueDate > origStr) {
         setDueDateError('なでなでで期限延長のロックを解除してください')
