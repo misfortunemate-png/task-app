@@ -172,7 +172,7 @@ export default function CharIndividualScreen({ charId, tasks, userDoc, updateUse
         <div className="poke-counters">
           <div>段階 <strong>{Math.max(stage + 1, 0)} / 5</strong></div>
           <div>セッション <strong>{sessionTaps}</strong> 回</div>
-          <div>累計 <strong>{cumulative + sessionTaps}</strong> 回</div>
+          <div>累計 <strong>{cumulative}</strong> 回</div>
           {remainingToNext != null && (
             <div className="poke-next">次の段階まで {remainingToNext} 回</div>
           )}
@@ -200,7 +200,7 @@ export default function CharIndividualScreen({ charId, tasks, userDoc, updateUse
           </div>
           <div className="char-stat">
             <span className="char-stat-label">累計つんつん</span>
-            <span className="char-stat-value">{cumulative + sessionTaps}</span>
+            <span className="char-stat-value">{cumulative}</span>
           </div>
         </div>
 
