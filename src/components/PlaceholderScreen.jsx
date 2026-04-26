@@ -2,6 +2,7 @@
 import { useMemo } from 'react'
 import { PLACEHOLDER_LINES, FACE_MAP } from '../data/lines.js'
 import { getCharacterById } from '../data/characters.js'
+import CharImage from './CharImage.jsx'
 import '../styles/PlaceholderScreen.css'
 
 // screenKey: 'notification' | 'character' | 'gacha'
@@ -19,7 +20,14 @@ export default function PlaceholderScreen({ screenKey }) {
       <p className="placeholder-coming-soon">Coming Soon</p>
       {line && chara && (
         <div className="placeholder-balloon">
-          <span className="placeholder-chara-emoji">{chara.emoji}</span>
+          <CharImage
+            characterId={chara.id}
+            faceKey={line.face}
+            faceEmoji={FACE_MAP[line.face] ?? '😊'}
+            charEmoji={chara.emoji}
+            size={80}
+            className="placeholder-chara-image"
+          />
           <div className="placeholder-speech">
             <span className="placeholder-face">{FACE_MAP[line.face] ?? '😊'}</span>
             <p className="placeholder-text">{line.text}</p>

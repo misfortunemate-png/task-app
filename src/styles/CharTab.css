@@ -41,21 +41,21 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 12px 0;
-  min-height: 64px;
+  padding: 10px 0;
+  min-height: 80px;
 }
 
 .char-display-all {
   display: flex;
   gap: 8px;
 }
-.char-display-emoji-sm { font-size: 1.8rem; }
+.char-display-img-sm { flex-shrink: 0; }
 
 .char-display-single {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
 }
-.char-display-emoji-lg { font-size: 2.8rem; }
+.char-display-img-lg { flex-shrink: 0; }
 .char-display-name { font-size: 0.78rem; font-weight: 600; }

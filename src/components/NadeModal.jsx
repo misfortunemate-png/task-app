@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { NADE_LINES, FACE_MAP } from '../data/lines.js'
 import { getCharacterById } from '../data/characters.js'
+import CharImage from './CharImage.jsx'
 import '../styles/NadeModal.css'
 
 // task: 放置対象のタスクオブジェクト
@@ -59,7 +60,7 @@ export default function NadeModal({ task, neglectLine, nadeThreshold, debugMode,
         {/* タスク名 */}
         <p className="nade-task-title">「{task.title}」</p>
 
-        {/* キャラemoji — タップでなでなで */}
+        {/* キャラ画像 — タップでなでなで */}
         <button
           className={`nade-chara-btn${unlocked ? ' unlocked' : ''}`}
           onClick={handleNade}
@@ -67,7 +68,14 @@ export default function NadeModal({ task, neglectLine, nadeThreshold, debugMode,
           aria-label="なでなで"
           disabled={unlocked}
         >
-          <span className="nade-chara-emoji">{chara.emoji}</span>
+          <CharImage
+            characterId={chara.id}
+            faceKey={currentNadeLine?.face ?? neglectLine?.face ?? 'normal'}
+            faceEmoji={currentNadeLine ? (FACE_MAP[currentNadeLine.face] ?? '😊') : faceEmoji}
+            charEmoji={chara.emoji}
+            size={110}
+            className="nade-chara-image"
+          />
         </button>
 
         {/* なでなでセリフ表示 */}

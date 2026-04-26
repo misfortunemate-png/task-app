@@ -2,6 +2,7 @@
 // spec-phase3.md §4
 import { FACE_MAP } from '../data/lines.js'
 import { getCharacterById } from '../data/characters.js'
+import CharImage from './CharImage.jsx'
 import '../styles/DialogModal.css'
 
 // characterId: string
@@ -19,8 +20,14 @@ export default function DialogModal({ characterId, line, onClose }) {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="dialog-modal">
-        {/* キャラemoji（大表示 — 将来イラストに差し替え可能） */}
-        <div className="dialog-chara-emoji">{chara.emoji}</div>
+        <CharImage
+          characterId={chara.id}
+          faceKey={line.face}
+          faceEmoji={faceEmoji}
+          charEmoji={chara.emoji}
+          size={100}
+          className="dialog-chara-image"
+        />
 
         {/* 表情 + セリフ */}
         <div className="dialog-speech">

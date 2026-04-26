@@ -2,6 +2,7 @@
 // spec-phase3.md §3
 import { CHARACTERS, getCharacterById } from '../data/characters.js'
 import { applyCharTheme } from '../utils/theme.js'
+import CharImage from './CharImage.jsx'
 import '../styles/CharTab.css'
 
 // activeChar: null（全員）| character.id string
@@ -41,16 +42,29 @@ export default function CharTab({ activeChar, onCharChange }) {
       {/* キャラ絵表示エリア */}
       <div className="char-tab-display">
         {!activeChar ? (
-          // 全員タブ: 三人のemojiを並べる
+          // 全員タブ: 三人を並べる
           <div className="char-display-all">
             {CHARACTERS.map((c) => (
-              <span key={c.id} className="char-display-emoji-sm">{c.emoji}</span>
+              <CharImage
+                key={c.id}
+                characterId={c.id}
+                faceKey="default"
+                charEmoji={c.emoji}
+                size={56}
+                className="char-display-img-sm"
+              />
             ))}
           </div>
         ) : (
-          // キャラタブ: emoji大表示
+          // キャラタブ: 画像大表示
           <div className="char-display-single" style={{ color: activeChara?.color }}>
-            <span className="char-display-emoji-lg">{activeChara?.emoji}</span>
+            <CharImage
+              characterId={activeChara.id}
+              faceKey="default"
+              charEmoji={activeChara.emoji}
+              size={96}
+              className="char-display-img-lg"
+            />
             <span className="char-display-name">{activeChara?.name}</span>
           </div>
         )}

@@ -24,9 +24,8 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
 }
 
-.dialog-chara-emoji {
-  font-size: 3.6rem;
-  line-height: 1;
+.dialog-chara-image {
+  flex-shrink: 0;
 }
 
 .dialog-speech {
