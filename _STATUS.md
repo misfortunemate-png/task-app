@@ -2,33 +2,20 @@
 
 ## 現在のフェーズ
 
-Phase 2: 完了
+Phase 2: 基盤構築 — **完了**（2026-04-26 受入済み）
 
-## 完了済み
+## Phase 2 成果
 
-- GitHub リポジトリ作成
-- Firebase CLI インストール・ログイン
-- Firebase プロジェクト作成（task-app-6e764, asia-northeast1）
-- Firestore データベース作成
-- Authentication（Google）有効化
-- firebase init 完了（Firestore + Hosting）
-- Firebase Web App 作成・SDK設定取得
-- §1: Vite + React プロジェクト初期化・Firebase SDK インストール
-- §2: src/firebase.js 作成（Firebase App/Auth/Firestore 初期化）
-- §5: Firestoreセキュリティルール更新・デプロイ（uid 一致のみ許可）
-- §3: 認証フロー実装（App.jsx, Login.jsx, main.jsx）
-- §4: タスクCRUD・リアルタイムリスナー実装（hooks/useTasks.js）
-- §6: UIコンポーネント実装（TaskList, TaskCard, TaskForm, App.css）
-- §7: ビルド（エラー・警告なし）・デプロイ完了
+- Vite + React + Firebase (Firestore + Auth + Hosting)
+- デプロイURL: https://task-app-6e764.web.app
+- タスクCRUD、Google認証、リアルタイム同期が動作
+- ソートはクライアント側で実施（Firestore複合インデックス不使用、PG判断）
 
-## デプロイURL
+## 既知事項
 
-https://task-app-6e764.web.app
+- タスク追加フォームのモバイルレイアウトに軽微なずれあり（Phase 3で対応）
+- フォントはシステムフォント（Phase 3でKlee One検討）
 
 ## 次のアクション
 
-手動テスト:
-- Googleログイン / ログアウト
-- タスク登録・編集・完了切替・削除
-- リロード後のデータ永続化確認
-- 2タブでのリアルタイム同期確認
+Phase 3: キャラクター統合（別チャットで要件定義から開始）
