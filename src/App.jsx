@@ -1,25 +1,11 @@
 // ルートコンポーネント — 認証管理・メインメニュー・画面ルーティング
 import { useEffect, useState } from 'react'
-import { onAuthStateChanged, signOut } from 'firebase/auth'
+import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from './firebase.js'
 import Login from './components/Login.jsx'
 import MainMenu from './components/MainMenu.jsx'
 import TaskScreen from './components/TaskScreen.jsx'
 import PlaceholderScreen from './components/PlaceholderScreen.jsx'
-
-// CSS変数をキャラテーマに切り替える — §3で使用。§2でルートに仕込む
-export function applyCharTheme(character) {
-  const root = document.documentElement
-  if (!character) {
-    root.style.removeProperty('--char-color')
-    root.style.removeProperty('--char-color-bg')
-    root.style.removeProperty('--char-color-accent')
-  } else {
-    root.style.setProperty('--char-color', character.color)
-    root.style.setProperty('--char-color-bg', character.colorBg)
-    root.style.setProperty('--char-color-accent', character.colorAccent)
-  }
-}
 
 export default function App() {
   const [user, setUser] = useState(undefined)

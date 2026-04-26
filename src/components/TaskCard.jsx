@@ -1,15 +1,21 @@
-// タスクカード — チェックボックス（完了切替）、編集・削除ボタン、削除確認を担当
+// タスクカード — 担当キャラのアクセントカラーを左ボーダーで表示 — spec-phase3.md §3
 import { CATEGORIES } from './TaskForm.jsx'
+import { getCharacterById } from '../data/characters.js'
 
 export default function TaskCard({ task, onToggle, onEdit, onDelete }) {
-  const cat = CATEGORIES.find((c) => c.id === task.category)
+  const cat   = CATEGORIES.find((c) => c.id === task.category)
+  const chara = getCharacterById(task.character)
 
   const handleDelete = () => {
     if (window.confirm(`「${task.title}」を削除しますか？`)) onDelete()
   }
 
   return (
-    <div className={`task-card${task.status === 'done' ? ' done' : ''}`}>
+    <div
+      className={`task-card${task.status === 'done' ? ' done' : ''}`}
+      // 担当キャラのアクセントカラーを左ボーダーで反映
+      style={chara ? { borderLeft: `4px solid ${chara.colorAccent}` } : {}}
+    >
       <input
         type="checkbox"
         className="task-checkbox"
@@ -18,11 +24,16 @@ export default function TaskCard({ task, onToggle, onEdit, onDelete }) {
       />
       <div className="task-body">
         <p className="task-title">{task.title}</p>
-        {cat && (
-          <div className="task-meta">
+        <div className="task-meta">
+          {chara && (
+            <span className="task-chara-tag" style={{ color: chara.color }}>
+              {chara.emoji} {chara.name}
+            </span>
+          )}
+          {cat && (
             <span className="task-category">{cat.emoji} {cat.label}</span>
-          </div>
-        )}
+          )}
+        </div>
         {task.note && <p className="task-note">{task.note}</p>}
       </div>
       <div className="task-actions">

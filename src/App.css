@@ -306,3 +306,44 @@ body {
   color: var(--color-muted);
 }
 .btn-cancel:hover { background: var(--color-bg); }
+
+/* ===== TaskScreen ===== */
+.task-screen { display: flex; flex-direction: column; }
+
+/* ===== キャラ選択グリッド（TaskForm内）===== */
+.char-select-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.char-select-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  border: 2px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  font-family: inherit;
+}
+
+.char-select-emoji { font-size: 1.6rem; line-height: 1; }
+.char-select-name  { font-size: 0.78rem; font-weight: 600; color: var(--color-text); }
+.char-select-btn.selected { font-weight: 700; }
+
+.form-error {
+  font-size: 0.78rem;
+  color: var(--color-hakone);
+  margin-top: 4px;
+}
+
+/* ===== タスクカードのキャラタグ ===== */
+.task-chara-tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 4px;
+}

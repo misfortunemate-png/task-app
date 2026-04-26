@@ -1,5 +1,7 @@
-// タスク登録・編集フォーム（モーダル形式）
+// タスク登録・編集フォーム — キャラ選択（必須）追加 — spec-phase3.md §3
+// dueDate（§5）は別途追加予定
 import { useState } from 'react'
+import { CHARACTERS } from '../data/characters.js'
 
 export const CATEGORIES = [
   { id: 'cleaning',    emoji: '🧹', label: '掃除' },
@@ -17,16 +19,23 @@ export const CATEGORIES = [
 ]
 
 export default function TaskForm({ initial, onSubmit, onCancel }) {
-  const [title, setTitle]       = useState(initial?.title    ?? '')
-  const [category, setCategory] = useState(initial?.category ?? '')
-  const [note, setNote]         = useState(initial?.note     ?? '')
+  const [title, setTitle]       = useState(initial?.title     ?? '')
+  const [category, setCategory] = useState(initial?.category  ?? '')
+  const [note, setNote]         = useState(initial?.note      ?? '')
+  // キャラ選択は必須。既存タスクの編集時は初期値を引き継ぐ
+  const [character, setCharacter] = useState(initial?.character ?? '')
+  const [charError, setCharError] = useState(false)
 
   const isEdit = !!initial
 
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!title.trim()) return
-    onSubmit({ title: title.trim(), category, note: note.trim() })
+    if (!character) {
+      setCharError(true)
+      return
+    }
+    onSubmit({ title: title.trim(), category, note: note.trim(), character })
   }
 
   return (
@@ -34,6 +43,8 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
       <div className="modal-sheet">
         <h2 className="modal-title">{isEdit ? 'タスクを編集' : 'タスクを追加'}</h2>
         <form onSubmit={handleSubmit}>
+
+          {/* タイトル */}
           <div className="form-group">
             <label className="form-label">タイトル <span style={{ color: 'var(--color-hakone)' }}>*</span></label>
             <input
@@ -45,6 +56,31 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
             />
           </div>
 
+          {/* 担当キャラ（必須）— CHARACTERS配列から動的生成 */}
+          <div className="form-group">
+            <label className="form-label">
+              担当キャラ <span style={{ color: 'var(--color-hakone)' }}>*</span>
+            </label>
+            <div className="char-select-grid">
+              {CHARACTERS.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`char-select-btn${character === c.id ? ' selected' : ''}`}
+                  style={character === c.id ? { borderColor: c.color, background: c.colorBg } : {}}
+                  onClick={() => { setCharacter(c.id); setCharError(false) }}
+                >
+                  <span className="char-select-emoji">{c.emoji}</span>
+                  <span className="char-select-name">{c.name}</span>
+                </button>
+              ))}
+            </div>
+            {charError && (
+              <p className="form-error">担当キャラを選択してください</p>
+            )}
+          </div>
+
+          {/* カテゴリ */}
           <div className="form-group">
             <label className="form-label">カテゴリ</label>
             <div className="category-grid">
@@ -62,6 +98,7 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
             </div>
           </div>
 
+          {/* メモ */}
           <div className="form-group">
             <label className="form-label">メモ</label>
             <textarea

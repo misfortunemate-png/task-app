@@ -30,6 +30,7 @@ export function useTasks(uid) {
     return unsubscribe
   }, [uid])
 
+  // character・dueDate・dueDateUnlocked は spec-phase3.md §3 で追加
   const addTask = (data) =>
     addDoc(collection(db, 'tasks'), {
       ...data,
@@ -37,6 +38,8 @@ export function useTasks(uid) {
       status: 'active',
       createdAt: serverTimestamp(),
       completedAt: null,
+      dueDate: data.dueDate ?? null,
+      dueDateUnlocked: false,
     })
 
   const updateTask = (id, data) =>

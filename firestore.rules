@@ -2,10 +2,17 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /tasks/{taskId} {
+      // 自分のタスクのみ読み取り・更新・削除可能
       allow read, update, delete: if request.auth != null
                                   && resource.data.uid == request.auth.uid;
+
+      // 新規作成時: uid一致 + 新フィールドのバリデーション
       allow create: if request.auth != null
-                    && request.resource.data.uid == request.auth.uid;
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.character is string
+                    && (request.resource.data.dueDate == null
+                        || request.resource.data.dueDate is timestamp)
+                    && request.resource.data.dueDateUnlocked is bool;
     }
   }
 }
