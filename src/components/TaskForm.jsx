@@ -2,17 +2,14 @@
 // spec-phase3.md §3 §5
 import { useState } from 'react'
 import { CHARACTERS } from '../data/characters.js'
-
-// DateをローカルタイムゾーンでYYYY-MM-DD文字列に変換する
-// toISOString()はUTC基準のため、JST(+9h)環境では前日になるバグを防ぐ
-const toLocalDateStr = (date) => {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
+import { toLocalDateStr, tsToLocalDateStr } from '../utils/date.js'
 
 const todayStr = () => toLocalDateStr(new Date())
+const tomorrowStr = () => {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  return toLocalDateStr(d)
+}
 
 export const CATEGORIES = [
   { id: 'cleaning',    emoji: '🧹', label: '掃除' },
@@ -39,9 +36,7 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
   // dueDate: "YYYY-MM-DD" 文字列 or '' （空 = 設定なし）
   // Firestoreには Timestamp または null で保存。変換は onSubmit 呼び出し側で行う
   const [dueDate, setDueDate] = useState(
-    initial?.dueDate?.toDate
-      ? toLocalDateStr(initial.dueDate.toDate())
-      : (initial?.dueDate ?? '')
+    tsToLocalDateStr(initial?.dueDate) ?? ''
   )
   const [dueDateError, setDueDateError] = useState('')
 
@@ -61,9 +56,7 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
     }
     // 編集時の後方延長チェック: dueDateUnlocked=falseかつ元の日付より後は不可
     if (isEdit && dueDate && initial.dueDate && !initial.dueDateUnlocked) {
-      const origStr = initial.dueDate?.toDate
-        ? toLocalDateStr(initial.dueDate.toDate())
-        : initial.dueDate
+      const origStr = tsToLocalDateStr(initial.dueDate) ?? initial.dueDate
       if (dueDate > origStr) {
         setDueDateError('なでなでで期限延長のロックを解除してください')
         return
@@ -135,13 +128,17 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
           {/* 完了予定日（任意）*/}
           <div className="form-group">
             <label className="form-label">完了予定日（任意）</label>
-            <input
-              type="date"
-              className="form-input"
-              value={dueDate}
-              min={todayStr()}
-              onChange={(e) => { setDueDate(e.target.value); setDueDateError('') }}
-            />
+            <div className="due-date-row">
+              <input
+                type="date"
+                className="form-input"
+                value={dueDate}
+                min={todayStr()}
+                onChange={(e) => { setDueDate(e.target.value); setDueDateError('') }}
+              />
+              <button type="button" className="btn-date-shortcut" onClick={() => { setDueDate(todayStr()); setDueDateError('') }}>今日</button>
+              <button type="button" className="btn-date-shortcut" onClick={() => { setDueDate(tomorrowStr()); setDueDateError('') }}>明日</button>
+            </div>
             {/* 編集時の後方延長制限の注記 */}
             {isEdit && initial?.dueDate && !initial?.dueDateUnlocked && (
               <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginTop: 4 }}>

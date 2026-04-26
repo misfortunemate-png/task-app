@@ -10,6 +10,7 @@ import NadeModal from './NadeModal.jsx'
 import { useTasks } from '../hooks/useTasks.js'
 import { getCharacterById } from '../data/characters.js'
 import { pickLine } from '../data/lines.js'
+import { toLocalDateStr, tsToLocalDateStr } from '../utils/date.js'
 
 const SS_KEY_LAST_NEGLECT = 'lastNeglectTaskId'
 
@@ -34,11 +35,12 @@ export default function TaskScreen({ user, onCharColorChange, debugMode, nadeThr
   // 放置判定 — tasksロード後に1回だけ実行
   useEffect(() => {
     if (neglectDone || !tasks || tasks.length === 0) return
-    const now = new Date()
+    const todayStr = toLocalDateStr(new Date())
     const overdue = tasks.filter((t) => {
       if (t.status === 'done' || !t.dueDate) return false
-      const d = t.dueDate.toDate ? t.dueDate.toDate() : new Date(t.dueDate)
-      return d < now
+      const dueDateStr = tsToLocalDateStr(t.dueDate)
+      // 日付のみ比較: 期限当日は放置判定しない。翌日以降に発火
+      return dueDateStr !== null && dueDateStr < todayStr
     })
     if (overdue.length === 0) return
     setNeglectDone(true)

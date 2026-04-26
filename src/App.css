@@ -359,6 +359,29 @@ body {
   margin-top: 4px;
 }
 
+/* 完了予定日: 入力欄 + 今日/明日ボタンの横並び */
+.due-date-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.due-date-row .form-input { flex: 1; }
+
+.btn-date-shortcut {
+  flex-shrink: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg);
+  font-size: 0.82rem;
+  color: var(--color-text);
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+.btn-date-shortcut:hover { background: var(--color-card-bg); border-color: var(--char-color); }
+
 /* ===== タスクカードのキャラタグ・期限日 ===== */
 .task-chara-tag {
   font-size: 0.75rem;

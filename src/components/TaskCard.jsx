@@ -1,19 +1,20 @@
 // タスクカード — キャラアクセントボーダー・完了予定日表示 — spec-phase3.md §3 §5
 import { CATEGORIES } from './TaskForm.jsx'
 import { getCharacterById } from '../data/characters.js'
+import { toLocalDateStr, tsToLocalDateStr } from '../utils/date.js'
 
-// Firestore Timestamp or null を "YYYY/MM/DD" 文字列に変換
+// Firestore Timestamp or null を "YYYY/MM/DD" 表示文字列に変換
 const formatDate = (ts) => {
-  if (!ts) return null
-  const d = ts.toDate ? ts.toDate() : new Date(ts)
-  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`
+  const s = tsToLocalDateStr(ts)
+  return s ? s.replace(/-/g, '/') : null
 }
 
-// 期限超過かどうかを判定（完了済みタスクは除外）
+// 日付のみ比較で期限超過を判定（時刻を除外）
+// 期限当日は超過扱いにしない — dueDate < 今日の日付 のときのみtrue
 const isOverdue = (task) => {
   if (!task.dueDate || task.status === 'done') return false
-  const d = task.dueDate.toDate ? task.dueDate.toDate() : new Date(task.dueDate)
-  return d < new Date()
+  const dueDateStr = tsToLocalDateStr(task.dueDate)
+  return dueDateStr !== null && dueDateStr < toLocalDateStr(new Date())
 }
 
 export default function TaskCard({ task, onToggle, onEdit, onDelete }) {
