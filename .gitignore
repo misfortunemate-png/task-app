@@ -67,3 +67,6 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Vite ビルド成果物 — firebase.json の predeploy で生成するためコミットしない（_STATUS.md PG指摘#1）
+dist/
