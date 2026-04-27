@@ -1,0 +1,10 @@
+rules_version = '2';
+// Firebase Storage セキュリティルール — uidベースアクセス制御（仕様書 Phase5 §1）
+// users/{uid}/ 配下は本人のみ read/write 可。匿名・他人からのアクセスは拒否
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
