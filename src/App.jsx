@@ -14,6 +14,7 @@ import SettingsScreen from './components/SettingsScreen.jsx'
 import { ToastContainer } from './components/Toast.jsx'
 import { useToast } from './hooks/useToast.js'
 import { useUserDoc } from './hooks/useUserDoc.js'
+import { useTasks } from './hooks/useTasks.js'
 import { CHARACTERS, getCharacterById } from './data/characters.js'
 import { registerImportedLines } from './data/lines.js'
 import { applyCharTheme } from './utils/theme.js'
@@ -44,6 +45,8 @@ export default function App() {
 
   // §4 §B2: ユーザー設定（chickets, pokeCount, gachaInventory）
   const { userDoc, updateUserDoc } = useUserDoc(user?.uid, showToast)
+  // タスク購読を App.jsx に一本化（_STATUS.md PG指摘#4 — 二重購読解消）
+  const { tasks, addTask, updateTask, toggleDone, deleteTask } = useTasks(user?.uid, showToast)
 
   // §1 URLインポート: マウント時にハッシュを解析。成功なら追加モーダルをプリフィル起動
   const [pendingImport, setPendingImport] = useState(null)
@@ -107,6 +110,11 @@ export default function App() {
         return (
           <TaskScreen
             user={user}
+            tasks={tasks}
+            addTask={addTask}
+            updateTask={updateTask}
+            toggleDone={toggleDone}
+            deleteTask={deleteTask}
             characterFilter={taskCharFilter}
             debugMode={debugMode}
             nadeThreshold={nadeThreshold}
@@ -123,6 +131,7 @@ export default function App() {
         return (
           <CharScreen
             user={user}
+            tasks={tasks}
             charKey={charScreenKey}
             showToast={showToast}
             userDoc={userDoc}

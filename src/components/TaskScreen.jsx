@@ -6,21 +6,21 @@ import { db } from '../firebase.js'
 import TaskList from './TaskList.jsx'
 import DialogModal from './DialogModal.jsx'
 import NadeModal from './NadeModal.jsx'
-import { useTasks } from '../hooks/useTasks.js'
 import { pickLine } from '../data/lines.js'
 import { toLocalDateStr, tsToLocalDateStr } from '../utils/date.js'
 
 const SS_KEY_LAST_NEGLECT = 'lastNeglectTaskId'
 
+// tasks/CRUD: App.jsx から lift up（二重購読解消 _STATUS.md PG指摘#4）
 // characterFilter: 上位（App.jsx）から渡される現在のキャラフィルタ — null | charId
 // pendingImport / onImportConsumed: §1 URLインポート（プリフィル）
 // userDoc / updateUserDoc: §4 チケット付与に使う
 export default function TaskScreen({
-  user, characterFilter, debugMode, nadeThreshold, showToast,
+  user, tasks, addTask, updateTask, toggleDone, deleteTask,
+  characterFilter, debugMode, nadeThreshold, showToast,
   userDoc, updateUserDoc,
   pendingImport, onImportConsumed,
 }) {
-  const { tasks, addTask, updateTask, toggleDone, deleteTask } = useTasks(user.uid, showToast)
   const [dialog, setDialog]             = useState(null)
   const [neglectModal, setNeglectModal] = useState(null)
   const [neglectDone, setNeglectDone]   = useState(false) // マウントあたり1回のみ表示
