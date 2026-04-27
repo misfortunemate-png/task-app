@@ -42,9 +42,10 @@ export default defineConfig({
             options: { cacheName: 'assets-cache', expiration: { maxEntries: 100 } },
           },
         ],
-        // オフラインフォールバック
-        navigateFallback: '/offline.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        // SPAのナビゲーションフォールバック — index.html を返してクライアントルーティングに委ねる
+        // offline.html はネットワーク切断時に別途ユーザーに見せるページ（navigateFallbackとは別概念）
+        navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/api\//, /\/offline\.html$/],
       },
     }),
   ],
