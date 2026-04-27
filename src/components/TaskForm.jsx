@@ -198,7 +198,6 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
             <input
               type="file"
               accept="image/*"
-              capture="environment"
               style={{ fontSize: '0.85rem' }}
               onChange={(e) => {
                 const file = e.target.files?.[0]
