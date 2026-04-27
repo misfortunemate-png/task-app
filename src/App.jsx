@@ -141,7 +141,7 @@ export default function App() {
       case 'gacha':
         return <GachaScreen userDoc={userDoc} updateUserDoc={updateUserDoc} showToast={showToast} />
       case 'settings':
-        return <SettingsScreen onSettingsChange={handleSettingsChange} user={user} showToast={showToast} />
+        return <SettingsScreen onSettingsChange={handleSettingsChange} user={user} showToast={showToast} userDoc={userDoc} updateUserDoc={updateUserDoc} />
       default:
         return null
     }

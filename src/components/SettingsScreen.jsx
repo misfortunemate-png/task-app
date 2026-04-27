@@ -4,6 +4,7 @@ import { CHARACTERS } from '../data/characters.js'
 import { LINES, FACE_MAP } from '../data/lines.js'
 import { pickLine } from '../data/lines.js'
 import { runWeeklyReset } from '../utils/weeklyReset.js'
+import { exportData, importData } from '../utils/exportImport.js'
 import '../styles/SettingsScreen.css'
 
 // 設定値を localStorage から読む（デフォルト付き）
@@ -15,8 +16,11 @@ const readSettings = () => ({
 
 // onSettingsChange: 設定変更時に App.jsx の再レンダリングを促すコールバック
 // user / showToast: 修正3 デバッグの週次リセット実行に使用
-export default function SettingsScreen({ onSettingsChange, user, showToast }) {
+export default function SettingsScreen({ onSettingsChange, user, showToast, userDoc, updateUserDoc }) {
   const [settings, setSettings] = useState(readSettings)
+  // §5: インポート処理中フラグ・進捗メッセージ
+  const [importBusy, setImportBusy] = useState(false)
+  const [importStatus, setImportStatus] = useState('')
 
   // デバッグパネルの状態
   const [debugCharId,   setDebugCharId]   = useState(CHARACTERS[0].id)
@@ -108,6 +112,66 @@ export default function SettingsScreen({ onSettingsChange, user, showToast }) {
           />
           <span>{settings.debugMode ? 'ON' : 'OFF'}</span>
         </label>
+      </section>
+
+      {/* エクスポート / インポート（仕様書 Phase5 §5）*/}
+      <section className="settings-section">
+        <h3 className="settings-section-title">データのバックアップ</h3>
+
+        {/* エクスポート */}
+        <button
+          className="btn-primary"
+          style={{ width: '100%', marginBottom: 12 }}
+          onClick={async () => {
+            try {
+              await exportData(user.uid)
+              showToast?.('エクスポートしました', 'success')
+            } catch {
+              showToast?.('エクスポートに失敗しました', 'error')
+            }
+          }}
+        >
+          📤 エクスポート（JSONダウンロード）
+        </button>
+
+        {/* インポート */}
+        <label style={{ display: 'block', marginBottom: 4, fontSize: '0.85rem', color: 'var(--color-muted)' }}>
+          インポート（JSONファイルを選択）
+        </label>
+        <input
+          type="file"
+          accept="application/json,.json"
+          disabled={importBusy}
+          style={{ fontSize: '0.85rem', width: '100%' }}
+          onChange={async (e) => {
+            const file = e.target.files?.[0]
+            if (!file) return
+            // 確認ダイアログ（仕様書 §5.2 必須）
+            if (!window.confirm('現在のデータはすべて上書きされます。よろしいですか？')) {
+              e.target.value = ''
+              return
+            }
+            setImportBusy(true)
+            setImportStatus('開始中...')
+            try {
+              const text = await file.text()
+              await importData(user.uid, text, setImportStatus)
+              showToast?.('インポートが完了しました', 'success')
+            } catch (err) {
+              console.error('インポート失敗:', err)
+              showToast?.('インポートに失敗しました', 'error')
+            } finally {
+              setImportBusy(false)
+              setImportStatus('')
+              e.target.value = ''
+            }
+          }}
+        />
+        {importBusy && (
+          <p style={{ marginTop: 8, fontSize: '0.85rem', color: 'var(--color-muted)' }}>
+            ⏳ {importStatus}
+          </p>
+        )}
       </section>
 
       {/* テーマ選択（枠のみ）*/}
