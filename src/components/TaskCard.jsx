@@ -56,13 +56,15 @@ export default function TaskCard({ task, onToggle, onEdit, onDelete }) {
           )}
         </div>
         {task.note && <p className="task-note">{task.note}</p>}
-        {/* 画像サムネイル — タップで新タブに拡大表示（仕様書 Phase5 §4.4）*/}
+        {/* 画像サムネイル — thumbnailUrl（200px軽量）を表示、タップで imageUrl を新タブに拡大（仕様書 Phase5 §4.4）
+            thumbnailUrl がない既存タスクは imageUrl にフォールバック。loading="lazy" で画面外は遅延ロード */}
         {task.imageUrl && (
           <a href={task.imageUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: 6 }}>
             <img
-              src={task.imageUrl}
+              src={task.thumbnailUrl ?? task.imageUrl}
               alt="添付画像"
-              style={{ maxWidth: '100%', maxHeight: 120, borderRadius: 6, objectFit: 'cover', display: 'block' }}
+              loading="lazy"
+              style={{ height: 64, width: 'auto', maxWidth: '100%', borderRadius: 6, objectFit: 'cover', display: 'block' }}
             />
           </a>
         )}

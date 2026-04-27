@@ -7,8 +7,8 @@ import {
   doc, serverTimestamp, Timestamp,
 } from 'firebase/firestore'
 import { db } from '../firebase.js'
-import { uploadTaskImage, deleteStorageFile } from '../utils/storage.js'
-import { compressImage } from '../utils/compress.js'
+import { uploadTaskImage, uploadTaskThumbnail, deleteStorageFile } from '../utils/storage.js'
+import { compressImage, compressThumbnail } from '../utils/compress.js'
 import { runWeeklyReset } from '../utils/weeklyReset.js'
 
 // showToast: (message, type) => void — §8 エラー時にトースト通知
@@ -49,9 +49,17 @@ export function useTasks(uid, showToast) {
       // doc() でIDを事前生成 → 圧縮・アップロード後に setDoc 1回で完結（addDoc+updateDoc の2往復を排除）
       const docRef = doc(collection(db, 'tasks'))
       let imageUrl = null
+      let thumbnailUrl = null
       if (imageFile) {
-        const compressed = await compressImage(imageFile)
-        imageUrl = await uploadTaskImage(uid, docRef.id, compressed)
+        // メイン画像とサムネイルを並行圧縮→並行アップロードして時間を最小化
+        const [compressed, thumb] = await Promise.all([
+          compressImage(imageFile),
+          compressThumbnail(imageFile),
+        ]);
+        [imageUrl, thumbnailUrl] = await Promise.all([
+          uploadTaskImage(uid, docRef.id, compressed),
+          uploadTaskThumbnail(uid, docRef.id, thumb),
+        ])
       }
       await setDoc(docRef, {
         ...rest,
@@ -62,6 +70,7 @@ export function useTasks(uid, showToast) {
         dueDate: toTimestamp(rest.dueDate),
         dueDateUnlocked: false,
         imageUrl,
+        thumbnailUrl,
       })
     } catch (err) {
       console.error('addTask失敗:', err)
@@ -77,10 +86,16 @@ export function useTasks(uid, showToast) {
       if (typeof payload.dueDate === 'string') {
         payload.dueDate = toTimestamp(payload.dueDate)
       }
-      // 画像差し替え: 圧縮→アップロード→imageUrl を上書き（仕様書 §4.1）
+      // 画像差し替え: 並行圧縮→並行アップロードで imageUrl/thumbnailUrl を上書き
       if (imageFile) {
-        const compressed = await compressImage(imageFile)
-        payload.imageUrl = await uploadTaskImage(uid, id, compressed)
+        const [compressed, thumb] = await Promise.all([
+          compressImage(imageFile),
+          compressThumbnail(imageFile),
+        ]);
+        [payload.imageUrl, payload.thumbnailUrl] = await Promise.all([
+          uploadTaskImage(uid, id, compressed),
+          uploadTaskThumbnail(uid, id, thumb),
+        ])
       }
       await updateDoc(doc(db, 'tasks', id), payload)
     } catch (err) {
@@ -107,9 +122,11 @@ export function useTasks(uid, showToast) {
   // imageUrl がある場合は Storage 画像を先に削除してから Firestore ドキュメントを削除する
   const deleteTask = async (task) => {
     try {
-      if (task.imageUrl) {
-        await deleteStorageFile(task.imageUrl)
-      }
+      // imageUrl・thumbnailUrl を並行削除（エラーは無視して Firestore 削除に進む）
+      await Promise.allSettled([
+        task.imageUrl ? deleteStorageFile(task.imageUrl) : Promise.resolve(),
+        task.thumbnailUrl ? deleteStorageFile(task.thumbnailUrl) : Promise.resolve(),
+      ])
       await deleteDoc(doc(db, 'tasks', task.id))
     } catch (err) {
       console.error('deleteTask失敗:', err)

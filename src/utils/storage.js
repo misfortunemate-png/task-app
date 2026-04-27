@@ -3,11 +3,17 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import { storage } from '../firebase.js'
 
-// 画像をアップロードし、ダウンロードURLを返す
-// uid: ログインユーザーID, taskId: タスクID, file: Blob（JPEG）
+// メイン画像をアップロードしダウンロードURLを返す
 export const uploadTaskImage = async (uid, taskId, file) => {
-  const filename = `image_${Date.now()}.jpg`
-  const storageRef = ref(storage, `users/${uid}/tasks/${taskId}/${filename}`)
+  const storageRef = ref(storage, `users/${uid}/tasks/${taskId}/image.jpg`)
+  await uploadBytes(storageRef, file, { contentType: 'image/jpeg' })
+  return getDownloadURL(storageRef)
+}
+
+// サムネイル（200px・軽量）をアップロードしダウンロードURLを返す
+// タスク一覧の高速表示用。メイン画像とは別パスに保存する
+export const uploadTaskThumbnail = async (uid, taskId, file) => {
+  const storageRef = ref(storage, `users/${uid}/tasks/${taskId}/thumb.jpg`)
   await uploadBytes(storageRef, file, { contentType: 'image/jpeg' })
   return getDownloadURL(storageRef)
 }

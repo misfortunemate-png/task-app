@@ -1,40 +1,43 @@
 // 画像圧縮ユーティリティ — Canvas API でリサイズ+JPEG変換（仕様書 Phase5 §4.3）
 // 入力: File/Blob → 出力: Blob（JPEG）
-//
-// 最適化:
-//   - createImageBitmap は1回のみ（寸法取得と描画を同一 bitmap で行う）
-//   - 長辺 800px にリサイズ後、品質 0.7 で JPEG 変換
-//   - 300KB 超の場合のみ 0.65→0.60 と最大2回再試行（超過時はそのまま採用）
+// デコードは1回のみ（bitmap を寸法取得と描画に使い回す）
 
-const MAX_LONG_SIDE = 800
 const MAX_SIZE_BYTES = 300 * 1024  // 300KB
 const QUALITIES = [0.7, 0.65, 0.60]
 
-export const compressImage = async (file) => {
-  // 1. デコードは1回だけ — bitmap を寸法取得と描画の両方に使い回す
-  const bitmap = await createImageBitmap(file)
-  const { width, height } = bitmap
-
-  // 2. 長辺 800px にリサイズ比率を計算
-  const scale = Math.min(1, MAX_LONG_SIDE / Math.max(width, height))
-  const dstW = Math.round(width * scale)
-  const dstH = Math.round(height * scale)
-
-  // 3. 縮小後サイズの Canvas に描画（drawImage の src→dst スケーリングで GPU リサイズ）
+// Canvas に bitmap を指定サイズで描画し JPEG Blob を返す（内部共通処理）
+const _drawAndEncode = async (bitmap, dstW, dstH, qualities, maxBytes) => {
   const canvas = document.createElement('canvas')
   canvas.width = dstW
   canvas.height = dstH
   canvas.getContext('2d').drawImage(bitmap, 0, 0, dstW, dstH)
-  bitmap.close()
 
-  // 4. 品質ループ（300KB 以内なら即終了、超過時のみ最大2段階下げる）
   let blob = null
-  for (const quality of QUALITIES) {
-    blob = await new Promise((resolve) =>
-      canvas.toBlob(resolve, 'image/jpeg', quality)
-    )
-    if (!blob || blob.size <= MAX_SIZE_BYTES) break
+  for (const quality of qualities) {
+    blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality))
+    if (!blob || blob.size <= maxBytes) break
   }
+  return blob
+}
 
+// メイン画像: 長辺 800px・300KB 以下（仕様書 §4.3 / §4追加修正）
+export const compressImage = async (file) => {
+  const bitmap = await createImageBitmap(file)
+  const { width, height } = bitmap
+  const scale = Math.min(1, 800 / Math.max(width, height))
+  const blob = await _drawAndEncode(bitmap, Math.round(width * scale), Math.round(height * scale), QUALITIES, MAX_SIZE_BYTES)
+  bitmap.close()
+  return blob
+}
+
+// サムネイル: 長辺 200px・軽量（タスク一覧の高速表示用）
+// 約 8〜15KB になるため一覧ロードが大幅に速くなる
+export const compressThumbnail = async (file) => {
+  const bitmap = await createImageBitmap(file)
+  const { width, height } = bitmap
+  const scale = Math.min(1, 200 / Math.max(width, height))
+  // 品質 0.65 固定・上限なし（サムネイルは画質より速度優先）
+  const blob = await _drawAndEncode(bitmap, Math.round(width * scale), Math.round(height * scale), [0.65], Infinity)
+  bitmap.close()
   return blob
 }
