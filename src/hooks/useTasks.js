@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import {
   collection, query, where,
-  onSnapshot, addDoc, updateDoc, deleteDoc,
+  onSnapshot, setDoc, updateDoc, deleteDoc,
   doc, serverTimestamp, Timestamp,
 } from 'firebase/firestore'
 import { db } from '../firebase.js'
@@ -45,9 +45,15 @@ export function useTasks(uid, showToast) {
 
   const addTask = async (data) => {
     try {
-      // imageFile は Firestore に保存しない（Storage にアップロード後 URL を保存）
       const { imageFile, ...rest } = data
-      const docRef = await addDoc(collection(db, 'tasks'), {
+      // doc() でIDを事前生成 → 圧縮・アップロード後に setDoc 1回で完結（addDoc+updateDoc の2往復を排除）
+      const docRef = doc(collection(db, 'tasks'))
+      let imageUrl = null
+      if (imageFile) {
+        const compressed = await compressImage(imageFile)
+        imageUrl = await uploadTaskImage(uid, docRef.id, compressed)
+      }
+      await setDoc(docRef, {
         ...rest,
         uid,
         status: 'active',
@@ -55,14 +61,8 @@ export function useTasks(uid, showToast) {
         completedAt: null,
         dueDate: toTimestamp(rest.dueDate),
         dueDateUnlocked: false,
-        imageUrl: null,
+        imageUrl,
       })
-      // 画像添付がある場合: 圧縮→アップロード→imageUrl を Firestore に保存（仕様書 §4.1）
-      if (imageFile) {
-        const compressed = await compressImage(imageFile)
-        const imageUrl = await uploadTaskImage(uid, docRef.id, compressed)
-        await updateDoc(docRef, { imageUrl })
-      }
     } catch (err) {
       console.error('addTask失敗:', err)
       showToast?.('保存に失敗しました。もう一度お試しください', 'error')
