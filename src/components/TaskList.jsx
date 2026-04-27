@@ -72,9 +72,10 @@ export default function TaskList({
     }
   }
 
+  // deleteTask(task) — §4.2 シグネチャ変更対応（task オブジェクトをそのまま渡す）
   const handleDelete = async (task) => {
     if (!window.confirm(`「${task.title}」を削除しますか？`)) return
-    await deleteTask(task.id)
+    await deleteTask(task)
     onDialogOpen?.('cancel', task.character)
   }
 

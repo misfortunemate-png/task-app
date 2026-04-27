@@ -7,6 +7,8 @@ import {
   doc, serverTimestamp, Timestamp,
 } from 'firebase/firestore'
 import { db } from '../firebase.js'
+import { uploadTaskImage, deleteStorageFile } from '../utils/storage.js'
+import { compressImage } from '../utils/compress.js'
 import { runWeeklyReset } from '../utils/weeklyReset.js'
 
 // showToast: (message, type) => void — §8 エラー時にトースト通知
@@ -43,15 +45,24 @@ export function useTasks(uid, showToast) {
 
   const addTask = async (data) => {
     try {
-      await addDoc(collection(db, 'tasks'), {
-        ...data,
+      // imageFile は Firestore に保存しない（Storage にアップロード後 URL を保存）
+      const { imageFile, ...rest } = data
+      const docRef = await addDoc(collection(db, 'tasks'), {
+        ...rest,
         uid,
         status: 'active',
         createdAt: serverTimestamp(),
         completedAt: null,
-        dueDate: toTimestamp(data.dueDate),
+        dueDate: toTimestamp(rest.dueDate),
         dueDateUnlocked: false,
+        imageUrl: null,
       })
+      // 画像添付がある場合: 圧縮→アップロード→imageUrl を Firestore に保存（仕様書 §4.1）
+      if (imageFile) {
+        const compressed = await compressImage(imageFile)
+        const imageUrl = await uploadTaskImage(uid, docRef.id, compressed)
+        await updateDoc(docRef, { imageUrl })
+      }
     } catch (err) {
       console.error('addTask失敗:', err)
       showToast?.('保存に失敗しました。もう一度お試しください', 'error')
@@ -61,9 +72,15 @@ export function useTasks(uid, showToast) {
 
   const updateTask = async (id, data) => {
     try {
-      const payload = { ...data }
+      const { imageFile, ...rest } = data
+      const payload = { ...rest }
       if (typeof payload.dueDate === 'string') {
         payload.dueDate = toTimestamp(payload.dueDate)
+      }
+      // 画像差し替え: 圧縮→アップロード→imageUrl を上書き（仕様書 §4.1）
+      if (imageFile) {
+        const compressed = await compressImage(imageFile)
+        payload.imageUrl = await uploadTaskImage(uid, id, compressed)
       }
       await updateDoc(doc(db, 'tasks', id), payload)
     } catch (err) {
@@ -86,9 +103,14 @@ export function useTasks(uid, showToast) {
     }
   }
 
-  const deleteTask = async (id) => {
+  // deleteTask — 引数を id → task に変更（仕様書 Phase5 §4.2）
+  // imageUrl がある場合は Storage 画像を先に削除してから Firestore ドキュメントを削除する
+  const deleteTask = async (task) => {
     try {
-      await deleteDoc(doc(db, 'tasks', id))
+      if (task.imageUrl) {
+        await deleteStorageFile(task.imageUrl)
+      }
+      await deleteDoc(doc(db, 'tasks', task.id))
     } catch (err) {
       console.error('deleteTask失敗:', err)
       showToast?.('保存に失敗しました。もう一度お試しください', 'error')

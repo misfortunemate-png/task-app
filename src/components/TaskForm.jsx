@@ -33,6 +33,9 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
   const [dueDateError, setDueDateError] = useState('')
   // §1: rewardPromptはフォームでは編集UIを出さないが、プリフィル値はsubmit時に転送する
   const [rewardPrompt] = useState(initial?.rewardPrompt ?? '')
+  // 画像添付 — 選択ファイルを保持（仕様書 Phase5 §4.1）
+  const [imageFile, setImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState(initial?.imageUrl ?? null)
 
   // プリフィルされたフィールドは背景色で視覚的に区別する（§1）
   const prefilledStyle = (key) => {
@@ -65,6 +68,8 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
     // §1: rewardPromptはあれば付与（編集時の既存値も保持）
     const rp = (rewardPrompt ?? initial?.rewardPrompt ?? '').toString()
     if (rp) payload.rewardPrompt = rp
+    // 画像添付: 選択されたファイルをペイロードに含める（useTasks 側で圧縮・アップロード）
+    if (imageFile) payload.imageFile = imageFile
     onSubmit(payload)
   }
 
@@ -168,6 +173,39 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="メモ（任意）"
+            />
+          </div>
+
+          {/* 画像添付 — カメラ撮影またはファイル選択（仕様書 Phase5 §4.1）*/}
+          <div className="form-group">
+            <label className="form-label">画像（任意）</label>
+            {imagePreview && (
+              <div style={{ marginBottom: 8 }}>
+                <img
+                  src={imagePreview}
+                  alt="プレビュー"
+                  style={{ maxWidth: '100%', maxHeight: 160, borderRadius: 8, objectFit: 'cover' }}
+                />
+                <button
+                  type="button"
+                  className="btn-icon danger"
+                  style={{ marginLeft: 8, verticalAlign: 'top' }}
+                  onClick={() => { setImageFile(null); setImagePreview(null) }}
+                  aria-label="画像を削除"
+                >🗑️</button>
+              </div>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              style={{ fontSize: '0.85rem' }}
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                setImageFile(file)
+                setImagePreview(URL.createObjectURL(file))
+              }}
             />
           </div>
 
