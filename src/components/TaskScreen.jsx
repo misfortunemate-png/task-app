@@ -8,6 +8,7 @@ import DialogModal from './DialogModal.jsx'
 import NadeModal from './NadeModal.jsx'
 import { pickLine } from '../data/lines.js'
 import { toLocalDateStr, tsToLocalDateStr } from '../utils/date.js'
+import { requestNotificationPermission, notifyNeglectedTasks } from '../utils/notification.js'
 
 const SS_KEY_LAST_NEGLECT = 'lastNeglectTaskId'
 
@@ -24,6 +25,19 @@ export default function TaskScreen({
   const [dialog, setDialog]             = useState(null)
   const [neglectModal, setNeglectModal] = useState(null)
   const [neglectDone, setNeglectDone]   = useState(false) // マウントあたり1回のみ表示
+  const [notifyDone, setNotifyDone]     = useState(false) // 通知発火済みフラグ（セッション内1回）
+
+  // §3: マウント時に通知許可をリクエスト（仕様書 Phase5 §3）
+  useEffect(() => {
+    requestNotificationPermission()
+  }, [])
+
+  // §3: tasks 初回ロード後に放置タスク通知を1回発火
+  useEffect(() => {
+    if (notifyDone || !tasks || tasks.length === 0) return
+    setNotifyDone(true)
+    notifyNeglectedTasks(tasks)
+  }, [tasks, notifyDone])
 
   // §5/§6: デバッグ強制設定を読む（debugModeがONの時のみ反映）
   const buildPickOpts = useCallback(() => {
