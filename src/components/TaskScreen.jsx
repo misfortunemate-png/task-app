@@ -118,6 +118,7 @@ export default function TaskScreen({
         onImportConsumed={onImportConsumed}
         debugMode={debugMode}
         onTriggerNeglect={debugMode ? triggerNeglect : undefined}
+        showToast={showToast}
       />
       {dialog && (
         <DialogModal

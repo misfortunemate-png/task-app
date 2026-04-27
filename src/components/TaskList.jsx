@@ -16,6 +16,7 @@ export default function TaskList({
   characterFilter, onDialogOpen,
   debugMode, onTriggerNeglect,
   pendingImport, onImportConsumed,
+  showToast,
 }) {
   const [tab, setTab]       = useState('active')
   const [formOpen, setFormOpen] = useState(false)
@@ -105,6 +106,8 @@ export default function TaskList({
             onToggle={() => handleToggle(task)}
             onEdit={() => setEditing(task)}
             onDelete={() => handleDelete(task)}
+            onRestore={task.status === 'done' ? () => toggleDone(task) : undefined}
+            showToast={showToast}
           />
         ))
       )}
