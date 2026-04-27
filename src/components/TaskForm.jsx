@@ -1,6 +1,6 @@
 // タスク登録・編集フォーム — キャラ選択（必須）+ 完了予定日（任意）
 // spec-phase3.md §3 §5
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { CHARACTERS } from '../data/characters.js'
 import { CATEGORIES } from '../data/categories.js'
 import { toLocalDateStr, tsToLocalDateStr } from '../utils/date.js'
@@ -36,6 +36,9 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
   // 画像添付 — 選択ファイルを保持（仕様書 Phase5 §4.1）
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(initial?.imageUrl ?? null)
+  // PWAスタンドアロンで input[type=file] 直タップが動かないケースの対処
+  // button の onClick から ref.click() で起動するパターンが最も安定する
+  const fileInputRef = useRef(null)
 
   // プリフィルされたフィールドは背景色で視覚的に区別する（§1）
   const prefilledStyle = (key) => {
@@ -176,7 +179,7 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
             />
           </div>
 
-          {/* 画像添付 — カメラ撮影またはファイル選択（仕様書 Phase5 §4.1）*/}
+          {/* 画像添付 — ボタンから hidden input を起動（PWAスタンドアロンで安定する方式）*/}
           <div className="form-group">
             <label className="form-label">画像（任意）</label>
             {imagePreview && (
@@ -190,15 +193,18 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
                   type="button"
                   className="btn-icon danger"
                   style={{ marginLeft: 8, verticalAlign: 'top' }}
-                  onClick={() => { setImageFile(null); setImagePreview(null) }}
+                  onClick={() => { setImageFile(null); setImagePreview(null); if (fileInputRef.current) fileInputRef.current.value = '' }}
                   aria-label="画像を削除"
                 >🗑️</button>
               </div>
             )}
+            {/* hidden input — button の onClick 経由で click() を呼ぶことで
+                PWA スタンドアロンモードでもファイルピッカーが確実に起動する */}
             <input
+              ref={fileInputRef}
               type="file"
               accept="image/*"
-              style={{ fontSize: '0.85rem' }}
+              style={{ display: 'none' }}
               onChange={(e) => {
                 const file = e.target.files?.[0]
                 if (!file) return
@@ -206,6 +212,13 @@ export default function TaskForm({ initial, onSubmit, onCancel }) {
                 setImagePreview(URL.createObjectURL(file))
               }}
             />
+            <button
+              type="button"
+              className="btn-cancel"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              📎 {imagePreview ? '画像を変更' : '画像を選択'}
+            </button>
           </div>
 
           <div className="form-actions">
